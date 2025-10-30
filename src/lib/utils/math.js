@@ -47,6 +47,38 @@ export function generateNoisySpiral(
 }
 
 /**
+ * Generates a set of uniformly spaced, noise-free spiral points with optional diagonal squash.
+ * @param {number} numPoints - Number of points to generate.
+ * @param {number} [turns=3] - Number of spiral turns.
+ * @param {number} [squashFactor=1] - Amount to squash along the diagonal (0 < squashFactor <= 1).
+ * @returns {{data: Array<{x:number,y:number}>, t: Array<number>}}
+ */
+export function generateNoiseFreeSpiralPoints(
+  numPoints,
+  turns = 3,
+  squashFactor = 1
+) {
+  const data = [];
+  const tArr = [];
+  for (let i = 0; i < numPoints; i++) {
+    const t = i / (numPoints - 1);
+    const theta = t * (Math.PI * 2 * turns);
+    const r = theta;
+    let x = r * Math.cos(theta);
+    let y = r * Math.sin(theta);
+    // Squash along diagonal y = x
+    let u = (x + y) / 2;
+    let v = (x - y) / 2;
+    u *= squashFactor;
+    x = u + v;
+    y = u - v;
+    data.push({ x, y });
+    tArr.push(t);
+  }
+  return { data, t: tArr };
+}
+
+/**
  * Computes the shortest path between two vertices using Dijkstra's algorithm.
  * @param {Array<Array<number>>} adj - Adjacency matrix (n x n), with Infinity for no edge.
  * @param {number} start - Index of the start vertex.

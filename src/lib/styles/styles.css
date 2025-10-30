@@ -28,12 +28,17 @@ body {
 .article-header {
   width: 600px;
   max-width: 90vw;
-  margin-bottom: 45px;
+  margin-bottom: 25px;
 }
 
+
 .inset {
-  max-width: 400px;
+  max-width: 475px;
   margin: 0 auto;
+  /* Add border to the bottom */
+  padding-bottom: 10px;
+  border-bottom: 1px solid #ddd;
+  margin-bottom: 16px;
 }
 
 input {
@@ -759,4 +764,12 @@ input[type="range"] {
 /* Animation for Vega plot elements. */
 svg.marks text, svg.marks path {
   transition: opacity 0.5s;
+}
+.viridis-gradient-text {
+  background: linear-gradient(90deg, #440154, #3b528b, #21918c, #5ec962, #afa11a);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  color: transparent;
+  font-weight: bold;
 }

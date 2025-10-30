@@ -8,19 +8,27 @@
     computePCA,
     projectOntoFirstPrincipalComponent,
     convertObjectDataFormatToArray,
+    generateNoiseFreeSpiralPoints,
   } from "$lib/utils/math.js";
   import { onMount } from "svelte";
 
   export let showPCAProjection = false;
+  export let showIntrinsicDimension = false;
   export let showPCAVectors = false;
   export let showScatter = false;
   export let showGraph = false;
   export let showScatterPlotAnimation = true; // New option to toggle scatter plot animation
   export let k = 5;
-  export let width = 700;
-  export let height = 700;
+  export let width = 650;
+  export let height = 650;
   export let radius = 5;
+  export let margin = 30;
   export let colorScheme = d3.interpolateViridis;
+
+  // New exported parameters for spiral generation
+  export let numPoints = 300;
+  export let noiseAmount = 0.2;
+  export let numTurns = 3;
 
   let data = null;
   let adj = null;
@@ -31,13 +39,20 @@
     createSvg(width, height);
     // Select the svg with d3
     svg = d3.select("#svg-container svg");
-    // Generate initial data
-    data = generateNoisySpiral(300, 0.2, 2.5);
+    // Generate initial data using exported variables
+    data = generateNoisySpiral(numPoints, noiseAmount, numTurns);
     adj = computeKNearestNeighborGraph(data.data, k);
   });
 
   $: if (data && showScatter && !showScatterPlotAnimation) {
     plotScatter(data);
+  }
+
+  $: if (data && showIntrinsicDimension) {
+    plotIntrinsicDimensionAxis();
+  } else if (svg && !showIntrinsicDimension) {
+    // Remove intrinsic dimension axis if it exists
+    svg.selectAll("g.intrinsic-dimension-axis").remove();
   }
 
   $: if (data && showScatterPlotAnimation) {
@@ -106,7 +121,6 @@
   function plotCreateScatterPlotAnimation(dataset, duration = 2000) {
     const data = dataset.data;
     const tArr = dataset.t;
-    const margin = 30;
 
     // Compute scales
     const xs = data.map((p) => p.x);
@@ -162,6 +176,205 @@
       .attr("cy", (d) => d.targetY);
   }
 
+  // /**
+  //  * Plots the intrinsic dimension axis as a dotted line along the underlying spiral curve, animated over durationMs.
+  //  * @param {number} durationMs - Animation duration in milliseconds (default 1200ms)
+  //  */
+  // function plotIntrinsicDimensionAxis(durationMs = 1200) {
+  //   // Always remove previous axis and reanimate
+  //   svg.selectAll("g.intrinsic-dimension-axis").remove();
+  //   // Use exported numPoints and numTurns
+  //   const turns = numTurns;
+  //   const squashFactor = 1.8; // Could also be exported if desired
+  //   const spiral = generateNoiseFreeSpiralPoints(numPoints, turns, squashFactor);
+  //   const spiralData = spiral.data;
+  //   // ...existing code for scales and animation...
+
+  //   // Compute scales from current data for consistent overlay
+  //   const xs = data.data.map((p) => p.x);
+  //   const ys = data.data.map((p) => p.y);
+  //   const xExtent = d3.extent(xs);
+  //   const yExtent = d3.extent(ys);
+  //   const xPad = (xExtent[1] - xExtent[0]) * 0.1;
+  //   const yPad = (yExtent[1] - yExtent[0]) * 0.1;
+  //   const xScale = d3
+  //     .scaleLinear()
+  //     .domain([xExtent[0] - xPad, xExtent[1] + xPad])
+  //     .range([margin, width - margin]);
+  //   const yScale = d3
+  //     .scaleLinear()
+  //     .domain([yExtent[0] - yPad, yExtent[1] + yPad])
+  //     .range([height - margin, margin]);
+
+  //   // Draw the intrinsic dimension axis as a dotted line, animated
+  //   const axisGroup = svg.append("g").attr("class", "intrinsic-dimension-axis");
+  //   const lineGen = d3
+  //     .line()
+  //     .x((d) => xScale(d.x))
+  //     .y((d) => yScale(d.y));
+  //   const path = axisGroup
+  //     .append("path")
+  //     .datum(spiralData)
+  //     .attr("d", lineGen)
+  //     .attr("fill", "none")
+  //     .attr("stroke", "#1976d2")
+  //     .attr("stroke-width", 3)
+  //   .attr("stroke-dasharray", "2 6")
+  //     .attr("opacity", 0.7);
+
+  //   // Animate the path drawing
+  //   const totalLength = path.node().getTotalLength();
+  //   path
+  //     .attr("stroke-dasharray", totalLength + "," + totalLength)
+  //     .attr("stroke-dashoffset", totalLength)
+  //     .transition()
+  //     .duration(durationMs)
+  //     .ease(d3.easeLinear)
+  //     .attr("stroke-dashoffset", 0);
+
+  //   // Add label at the lowest y point (bottom of screen) with a margin
+  //   // Find the spiral point with the maximum y (since SVG y=0 is top)
+  //   let maxY = -Infinity;
+  //   let maxIdx = 0;
+  //   for (let i = 0; i < spiralData.length; i++) {
+  //     if (spiralData[i].y > maxY) {
+  //       maxY = spiralData[i].y;
+  //       maxIdx = i;
+  //     }
+  //   }
+  //   const labelX = xScale(spiralData[maxIdx].x);
+  //   const labelY = yScale(spiralData[maxIdx].y) - 24; // 24px margin above curve
+  //   axisGroup
+  //     .append("text")
+  //     .attr("x", labelX)
+  //     .attr("y", labelY)
+  //     .attr("text-anchor", "middle")
+  //     .attr("fill", "#1976d2")
+  //     .attr("font-size", 20)
+  //   .attr("font-weight", "normal")
+  //     .text("Latent 1D Manifold");
+  // }
+  /**
+   * Plots the intrinsic dimension axis as a dotted line along the underlying spiral curve, animated over durationMs.
+   * The label follows the curve near the top-left (theta ~ 3/4 pi), offset slightly, and stays upright.
+   * @param {number} durationMs - Animation duration in milliseconds (default 1200ms)
+   */
+  function plotIntrinsicDimensionAxis(durationMs = 1200) {
+    // Remove previous axis
+    svg.selectAll("g.intrinsic-dimension-axis").remove();
+
+    // Spiral parameters
+    const turns = numTurns;
+    const squashFactor = 1.8;
+    const spiral = generateNoiseFreeSpiralPoints(
+      numPoints,
+      turns,
+      squashFactor
+    );
+    const spiralData = spiral.data;
+
+    // Compute scales
+    const xs = data.data.map((p) => p.x);
+    const ys = data.data.map((p) => p.y);
+    const xExtent = d3.extent(xs);
+    const yExtent = d3.extent(ys);
+    const xPad = (xExtent[1] - xExtent[0]) * 0.1;
+    const yPad = (yExtent[1] - yExtent[0]) * 0.1;
+
+    const xScale = d3
+      .scaleLinear()
+      .domain([xExtent[0] - xPad, xExtent[1] + xPad])
+      .range([margin, width - margin]);
+
+    const yScale = d3
+      .scaleLinear()
+      .domain([yExtent[0] - yPad, yExtent[1] + yPad])
+      .range([height - margin, margin]);
+
+    // Draw the dotted spiral
+    const axisGroup = svg.append("g").attr("class", "intrinsic-dimension-axis");
+
+    const lineGen = d3
+      .line()
+      .x((d) => xScale(d.x))
+      .y((d) => yScale(d.y));
+
+    const path = axisGroup
+      .append("path")
+      .datum(spiralData)
+      .attr("d", lineGen)
+      .attr("fill", "none")
+      .attr("stroke", "#1976d2")
+      .attr("stroke-width", 3)
+      .attr("stroke-dasharray", "6,4") // fixed dashed line
+      .attr("opacity", 0.7);
+
+    // Animate the path drawing
+    const totalLength = path.node().getTotalLength();
+    path
+      .attr("stroke-dasharray", totalLength + "," + totalLength)
+      .attr("stroke-dashoffset", totalLength)
+      .transition()
+      .duration(durationMs)
+      .ease(d3.easeLinear)
+      .attr("stroke-dashoffset", 0);
+
+    // --- Compute top-left label position using polar coordinates ---
+    function cartesianToPolar(p) {
+      return {
+        r: Math.sqrt(p.x * p.x + p.y * p.y),
+        theta: Math.atan2(p.y, p.x),
+      };
+    }
+
+    const targetTheta = (3 * Math.PI) / 4; // top-left
+    let bestIdx = 0;
+    let bestScore = -Infinity;
+
+    for (let i = 0; i < spiralData.length; i++) {
+      const { r, theta } = cartesianToPolar(spiralData[i]);
+      const score = r * Math.cos(theta - targetTheta);
+      if (score > bestScore) {
+        bestScore = score;
+        bestIdx = i;
+      }
+    }
+
+    // Use a small segment for the label, reverse to keep text upright
+    const segmentLength = 15;
+    const startIdx = Math.max(0, bestIdx - Math.floor(segmentLength / 2));
+    const endIdx = Math.min(spiralData.length, startIdx + segmentLength);
+    const labelData = spiralData.slice(startIdx, endIdx).reverse();
+
+    // Slight top-left offset
+    const offsetX = -15;
+    const offsetY = -15;
+
+    // Path for text
+    const labelPath = axisGroup
+      .append("path")
+      .attr("id", "labelPath")
+      .attr(
+        "d",
+        d3
+          .line()
+          .x((d) => xScale(d.x) + offsetX)
+          .y((d) => yScale(d.y) + offsetY)(labelData)
+      )
+      .attr("fill", "none");
+
+    // Add text along path
+    axisGroup
+      .append("text")
+      .attr("fill", "#1976d2")
+      .attr("font-size", 24)
+      .attr("font-weight", 280)
+      .append("textPath")
+      .attr("xlink:href", "#labelPath")
+      .attr("startOffset", "0%")
+      .text("Latent 1D Manifold");
+  }
+
   /**
    * Plots a scatter plot and overlays k-nearest neighbor graph lines using d3.
    * @param {{data: Array<{x: number, y: number}>, t: Array<number>}} dataset - Dataset object.
@@ -170,7 +383,6 @@
   function plotKNearestNeighborGraph(dataset, adj) {
     const data = dataset.data;
     const tArr = dataset.t;
-    const margin = 30;
     // Only remove existing kNN lines, not the entire SVG
     if (!svg.empty()) {
       svg.selectAll("line.kNN").remove();
@@ -360,7 +572,6 @@
    */
   function plotPrincipalComponents(dataset, pcs) {
     const data = dataset.data;
-    const margin = 30;
     const xs = data.map((p) => p.x);
     const ys = data.map((p) => p.y);
     const xExtent = d3.extent(xs);
@@ -396,7 +607,7 @@
         .attr("y1", origin[1])
         .attr("x2", origin[0] + vx * arrowScale)
         .attr("y2", origin[1] - vy * arrowScale)
-        .attr("stroke", i === 0 ? "#e53935" : "#1976d2")
+        .attr("stroke", "#333")
         .attr("stroke-width", 3)
         .attr("marker-end", "url(#arrowhead)");
     });
@@ -428,7 +639,6 @@
    */
   function plotShortestPath(dataset, adj, start, end) {
     const data = dataset.data;
-    const margin = 30;
     const xs = data.map((p) => p.x);
     const ys = data.map((p) => p.y);
     const xExtent = d3.extent(xs);
@@ -483,7 +693,6 @@
     const pcaProjections = projectOntoFirstPrincipalComponent(dataset.data);
 
     // Scales
-    const margin = 30;
     const xs = dataset.data.map((p) => p.x);
     const ys = dataset.data.map((p) => p.y);
     const xExtent = d3.extent(xs);
