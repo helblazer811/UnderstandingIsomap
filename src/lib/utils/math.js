@@ -1,82 +1,4 @@
 import * as math from "mathjs";
-/**
- * Generates an ordered dataset of 2D spiral points with Gaussian noise and squashed along the diagonal.
- * @param {number} numPoints - Number of points to generate.
- * @param {number} noiseVariance - Variance of the Gaussian noise.
- * @param {number} [turns=3] - Number of spiral turns.
- * @param {number} [squashFactor=1] - Amount to squash along the diagonal (0 < squashFactor <= 1).
- * @returns {{data: Array<{x:number,y:number}>, t: Array<number>}}
- */
-export function generateNoisySpiral(
-  numPoints,
-  noiseVariance,
-  turns = 3,
-  squashFactor = 1.8
-) {
-  const data = [];
-  const tArr = [];
-  const noiseStd = Math.sqrt(noiseVariance);
-
-  for (let i = 0; i < numPoints; i++) {
-    const t = i / (numPoints - 1);
-    const theta = t * (Math.PI * 2 * turns);
-    const r = theta;
-    let x = r * Math.cos(theta);
-    let y = r * Math.sin(theta);
-
-    // Add Gaussian noise
-    x += noiseStd * gaussianRandom();
-    y += noiseStd * gaussianRandom();
-
-    // Squash along diagonal y = x
-    // u = (x+y)/2 along diagonal, v = (x-y)/2 orthogonal
-    let u = (x + y) / 2;
-    let v = (x - y) / 2;
-
-    u *= squashFactor; // squash along diagonal
-
-    // reconstruct
-    x = u + v;
-    y = u - v;
-
-    data.push({ x, y });
-    tArr.push(t);
-  }
-
-  return { data, t: tArr };
-}
-
-/**
- * Generates a set of uniformly spaced, noise-free spiral points with optional diagonal squash.
- * @param {number} numPoints - Number of points to generate.
- * @param {number} [turns=3] - Number of spiral turns.
- * @param {number} [squashFactor=1] - Amount to squash along the diagonal (0 < squashFactor <= 1).
- * @returns {{data: Array<{x:number,y:number}>, t: Array<number>}}
- */
-export function generateNoiseFreeSpiralPoints(
-  numPoints,
-  turns = 3,
-  squashFactor = 1
-) {
-  const data = [];
-  const tArr = [];
-  for (let i = 0; i < numPoints; i++) {
-    const t = i / (numPoints - 1);
-    const theta = t * (Math.PI * 2 * turns);
-    const r = theta;
-    let x = r * Math.cos(theta);
-    let y = r * Math.sin(theta);
-    // Squash along diagonal y = x
-    let u = (x + y) / 2;
-    let v = (x - y) / 2;
-    u *= squashFactor;
-    x = u + v;
-    y = u - v;
-    data.push({ x, y });
-    tArr.push(t);
-  }
-  return { data, t: tArr };
-}
 
 /**
  * Computes the shortest path between two vertices using Dijkstra's algorithm.
@@ -160,8 +82,35 @@ export function computeKNearestNeighborGraph(data, k) {
   }
   return adj;
 }
+/**
+ * Computes the epsilon neighborhood graph for a set of 2D points.
+ * Returns an adjacency matrix (n x n) where entry [i][j] is the Euclidean distance if points i and j are within epsilon distance, otherwise 0.
+ * @param {Array<{x: number, y: number}>} data - Array of 2D points.
+ * @param {number} epsilon - Maximum distance for neighborhood inclusion.
+ * @returns {Array<Array<number>>} Adjacency matrix.
+ */
+export function computeEpsilonNeighborhoodGraph(data, epsilon) {
+  const n = data.length;
+  // Initialize adjacency matrix with 0
+  const adj = Array.from({ length: n }, () => Array(n).fill(0));
 
-// Helper: Box-Muller transform for standard normal
+  // Compute all pairwise distances and connect points within epsilon
+  for (let i = 0; i < n; i++) {
+    for (let j = i + 1; j < n; j++) {
+      // Only compute upper triangle (symmetric matrix)
+      const dx = data[i].x - data[j].x;
+      const dy = data[i].y - data[j].y;
+      const distance = Math.sqrt(dx * dx + dy * dy);
+
+      if (distance <= epsilon) {
+        adj[i][j] = 1;
+        adj[j][i] = 1; // Make symmetric (undirected graph)
+      }
+    }
+  }
+
+  return adj;
+}
 export function gaussianRandom() {
   let u = 0,
     v = 0;

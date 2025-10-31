@@ -11,7 +11,7 @@
     a {
         color: #000;
         border-bottom: 1px dashed #000;
-        font-weight:  550;
+        font-weight:  650;
         cursor: pointer;
     }
     a:hover {

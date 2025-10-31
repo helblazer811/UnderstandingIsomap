@@ -10,25 +10,25 @@
     convertObjectDataFormatToArray,
     generateNoiseFreeSpiralPoints,
   } from "$lib/utils/math.js";
+  import { uiState } from "$lib/uiState.js";
   import { onMount } from "svelte";
+  // Use uiState store for all UI state
+  import { get } from 'svelte/store';
 
-  export let showPCAProjection = false;
-  export let showIntrinsicDimension = false;
-  export let showPCAVectors = false;
-  export let showScatter = false;
-  export let showGraph = false;
-  export let showScatterPlotAnimation = true; // New option to toggle scatter plot animation
-  export let k = 5;
-  export let width = 650;
-  export let height = 650;
-  export let radius = 5;
-  export let margin = 30;
-  export let colorScheme = d3.interpolateViridis;
+  const sectionStateFunctions = {
+    "initial": () => {
+      // Initial state: show scatter plot with animation
+      showScatter = true;
+      showScatterPlotAnimation = true;
+      showIntrinsicDimension = false;
+      showGraph = false;
+      showPCAVectors = false;
+      showPCAProjection = false;
+      showEpsilonBallGraph = false;
+    },
+    "isomap": () => {}
+  }
 
-  // New exported parameters for spiral generation
-  export let numPoints = 300;
-  export let noiseAmount = 0.2;
-  export let numTurns = 3;
 
   let data = null;
   let adj = null;
@@ -36,36 +36,36 @@
 
   onMount(() => {
     // Create SVG if it doesn't exist
-    createSvg(width, height);
+    createSvg($uiState.width, $uiState.height);
     // Select the svg with d3
     svg = d3.select("#svg-container svg");
-    // Generate initial data using exported variables
-    data = generateNoisySpiral(numPoints, noiseAmount, numTurns);
-    adj = computeKNearestNeighborGraph(data.data, k);
+    // Generate initial data using store variables
+    data = generateNoisySpiral($uiState.numPoints, $uiState.noiseAmount, $uiState.numTurns);
+    adj = computeKNearestNeighborGraph(data.data, $uiState.k);
   });
 
-  $: if (data && showScatter && !showScatterPlotAnimation) {
+
+  $: if (data && $uiState.showScatter && !$uiState.showScatterPlotAnimation) {
     plotScatter(data);
   }
 
-  $: if (data && showIntrinsicDimension) {
+  $: if (data && $uiState.showIntrinsicDimension && $uiState.showScatterPlotAnimation && !$uiState.showPCAProjection) {
     plotIntrinsicDimensionAxis();
-  } else if (svg && !showIntrinsicDimension) {
+  } else if (svg && !$uiState.showIntrinsicDimension) {
     // Remove intrinsic dimension axis if it exists
     svg.selectAll("g.intrinsic-dimension-axis").remove();
   }
 
-  $: if (data && showScatterPlotAnimation) {
+  $: if (data && $uiState.showScatterPlotAnimation) {
     plotCreateScatterPlotAnimation(data);
   }
 
-  $: if (data && adj && showGraph) {
+  $: if (data && adj && $uiState.showGraph) {
     plotKNearestNeighborGraph(data, adj);
   }
 
-  $: if (data && showPCAVectors) {
+  $: if (data && $uiState.showPCAVectors) {
     const pcaResult = computePCA(data.data);
-    console.log(pcaResult);
     // Scale the components by the values and scale all down by max value
     const components = pcaResult.components.slice(0, 2);
     const maxVal = Math.max(...pcaResult.values);
@@ -77,13 +77,19 @@
     components.forEach((comp) => {
       comp[1] = -comp[1];
     });
-    // Swap x and y components of each vector for plotting
-    // const swappedComponents = components.map((vec) => [vec[1], vec[0]]);
     plotPrincipalComponents(data, components);
   }
 
-  $: if (data && showPCAProjection) {
+  $: if (data && $uiState.showEpsilonBallGraph) {
+    plotEpsilonBallGraph(data, $uiState.epsilon);
+  } else if (svg && !$uiState.showEpsilonBallGraph) {
+    svg.selectAll("g.epsilon-ball-group").remove();
+  }
+
+  $: if (data && $uiState.showPCAProjection) {
     plotPCAProjection(data);
+  } else if (svg && !$uiState.showPCAProjection) {
+    svg.selectAll("g.pca-projection-group").remove();
   }
 
   //   // Plot shortest path between random points
@@ -113,6 +119,7 @@
     }
     return svg;
   }
+
   /**
    * Animates points from random positions to their target spiral positions.
    * @param {{data: Array<{x: number, y: number}>, t: Array<number>}} dataset
@@ -374,6 +381,82 @@
       .attr("startOffset", "0%")
       .text("Latent 1D Manifold");
   }
+
+  /**
+ * Plots epsilon balls around each point and connects points within epsilon distance.
+ * @param {{data: Array<{x: number, y: number}>, t: Array<number>}} dataset
+ * @param {number} epsilon - Radius of the epsilon ball (in data space units)
+ */
+function plotEpsilonBallGraph(dataset, epsilon = 1.0) {
+  // Remove previous epsilon ball group if any
+  svg.selectAll("g.epsilon-ball-group").remove();
+  const dataArr = dataset.data;
+  // Compute scales from current data for consistent overlay
+  const xs = dataArr.map((p) => p.x);
+  const ys = dataArr.map((p) => p.y);
+  const xExtent = d3.extent(xs);
+  const yExtent = d3.extent(ys);
+  const xPad = (xExtent[1] - xExtent[0]) * 0.1;
+  const yPad = (yExtent[1] - yExtent[0]) * 0.1;
+  const xScale = d3
+    .scaleLinear()
+    .domain([xExtent[0] - xPad, xExtent[1] + xPad])
+    .range([margin, width - margin]);
+  const yScale = d3
+    .scaleLinear()
+    .domain([yExtent[0] - yPad, yExtent[1] + yPad])
+    .range([height - margin, margin]);
+
+  // Group for all epsilon balls and edges
+  const group = svg.append("g").attr("class", "epsilon-ball-group");
+
+  // Draw circles (epsilon balls)
+  group
+    .selectAll("circle.epsilon-ball")
+    .data(dataArr)
+    .enter()
+    .append("circle")
+    .attr("class", "epsilon-ball")
+    .attr("cx", (d) => xScale(d.x))
+    .attr("cy", (d) => yScale(d.y))
+    .attr("r", (d) => {
+      // Convert epsilon in data space to screen space (use x scale for isotropic)
+      const r0 = xScale(d.x + epsilon) - xScale(d.x);
+      return Math.abs(r0);
+    })
+    .attr("stroke", "#1976d2")
+    .attr("stroke-width", 1.5)
+    .attr("fill", "none")
+    .attr("opacity", 0.5);
+
+  // Compute edges: connect points within epsilon in data space
+  const edges = [];
+  for (let i = 0; i < dataArr.length; i++) {
+    for (let j = i + 1; j < dataArr.length; j++) {
+      const dx = dataArr[i].x - dataArr[j].x;
+      const dy = dataArr[i].y - dataArr[j].y;
+      const dist = Math.sqrt(dx * dx + dy * dy);
+      if (dist <= epsilon) {
+        edges.push({ source: i, target: j });
+      }
+    }
+  }
+  // Draw edges
+  group
+    .selectAll("line.epsilon-edge")
+    .data(edges)
+    .enter()
+    .append("line")
+    .attr("class", "epsilon-edge")
+    .attr("x1", (d) => xScale(dataArr[d.source].x))
+    .attr("y1", (d) => yScale(dataArr[d.source].y))
+    .attr("x2", (d) => xScale(dataArr[d.target].x))
+    .attr("y2", (d) => yScale(dataArr[d.target].y))
+    .attr("stroke", "#1976d2")
+    .attr("stroke-width", 1.2)
+    .attr("opacity", 0.6);
+}
+
 
   /**
    * Plots a scatter plot and overlays k-nearest neighbor graph lines using d3.
