@@ -25,7 +25,6 @@
   let svgEl; // reference to the <svg> element
   let dataset = null;
   let highlightedIdx = null;
-//   let tempHighlightedIdx = null;
   let xScale = null;
   let yScale = null;
 
@@ -73,15 +72,6 @@
       .attr("fill", graphColor)
       .attr("opacity", (d, i) => (withinEpsilon[i] ? pointOpacity * 2 : pointOpacity))
       .style("cursor", "pointer")
-    //   .on("click", function (event, d) {
-    //     console.log("Point clicked:", d);
-    //     const idx = dataArr.indexOf(d);
-    //     if (idx !== -1) {
-    //       highlightedIdx = idx;
-    //     //   tempHighlightedIdx = null; // Clear temporary highlight on click
-    //       console.log("Clicked point index:", idx);
-    //     }
-    //   })
       .on("mouseenter", function (event, d) {
         const idx = dataArr.indexOf(d);
         if (idx !== -1 && idx !== highlightedIdx) {
@@ -90,49 +80,6 @@
           animateDistances = true;
         }
       })
-    //   .on("mouseleave", function (event, d) {
-    //     tempHighlightedIdx = null;
-    //     // Clean up the temporary epsilon ball group
-    //     d3.select(svgEl).selectAll("g.temp-epsilon-ball-group").remove();
-    //   });
-  }
-
-  // Function to plot lines from a random point to all other points
-  function plottingPairwiseDistances(svg, dataset, xScale, yScale) {
-    svg.selectAll("g.pairwise-lines-group").remove();
-    const dataArr = dataset.data;
-    const randomIdx = Math.floor(Math.random() * dataArr.length);
-    const randomPoint = dataArr[randomIdx];
-
-    // Insert the lines group before the scatter group to ensure lines are behind points
-    const linesGroup = svg.insert("g", "g.scatter-group").attr("class", "pairwise-lines-group");
-
-    // Draw lines from random point to all other points
-    dataArr.forEach((point, i) => {
-      if (i !== randomIdx) {
-        linesGroup
-          .append("line")
-          .attr("x1", xScale(randomPoint.x))
-          .attr("y1", yScale(randomPoint.y))
-          .attr("x2", xScale(point.x))
-          .attr("y2", yScale(point.y))
-          .attr("stroke", "#999")
-          .attr("stroke-width", 1)
-          .attr("opacity", 0.5);
-      }
-    });
-
-    // Highlight the random point
-    linesGroup
-      .append("circle")
-      .attr("cx", xScale(randomPoint.x))
-      .attr("cy", yScale(randomPoint.y))
-      .attr("r", radius + 2)
-      .attr("fill", "none")
-      .attr("stroke", traversalColor)
-      .attr("stroke-width", 3);
-
-    return linesGroup;
   }
 
   // Function to animate drawing lines from a start point to all other points
@@ -173,7 +120,6 @@
         .attr("stroke", graphColor)
         .attr("stroke-width", 2)
         .attr("opacity", traversalOpacity)
-        // .attr("stroke-dasharray", "8 2");
 
       // Animate the line extending to the end point
       await new Promise((resolve) => {
@@ -188,13 +134,6 @@
       // Pause briefly before next line
       await new Promise((resolve) => setTimeout(resolve, pauseBetweenTraversals / 10));
     }
-
-    // // Animation complete
-    // setTimeout(() => {
-    //   animateDistances = false;
-    //   svg.selectAll("g.animation-lines-group").remove();
-    //   showDistances = true;
-    // }, pauseBetweenTraversals);
   }
 
   $: if (dataset && svgEl && showScatterPlot) {
@@ -206,16 +145,6 @@
     const svg = d3.select(svgEl);
     animatingPairwiseDistances(svg, dataset, xScale, yScale, highlightedIdx);
   }
-//  // Do temp highlighted index for hover
-//  $: if (dataset && svgEl && tempHighlightedIdx !== null && active) {
-//     const svg = d3.select(svgEl);
-//     animatingPairwiseDistances(svg, dataset, xScale, yScale, tempHighlightedIdx);
-//   }
-
-//   $: if (dataset && svgEl && showDistances && active) {
-//     const svg = d3.select(svgEl);
-//     plottingPairwiseDistances(svg, dataset, xScale, yScale);
-//   }
 
   onMount(() => {
     // Generate sine wave dataset
