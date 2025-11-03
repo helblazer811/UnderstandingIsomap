@@ -48,6 +48,53 @@ export function dijkstraShortestPath(adj, start, end) {
 }
 
 /**
+ * Computes the shortest path distances from a start vertex to all other vertices using Dijkstra's algorithm.
+ * @param {Array<Array<number>>} adj - Adjacency matrix (n x n), with Infinity for no edge.
+ * @param {number} start - Index of the start vertex.
+ * @returns {Array<number>} Array of distances from start to each vertex. Infinity if unreachable.
+ */
+export function dijkstraDistances(adj, start) {
+  const n = adj.length;
+  const dist = Array(n).fill(Infinity);
+  const visited = Array(n).fill(false);
+  dist[start] = 0;
+  for (let count = 0; count < n; count++) {
+    // Find unvisited node with smallest distance
+    let u = -1;
+    let minDist = Infinity;
+    for (let i = 0; i < n; i++) {
+      if (!visited[i] && dist[i] < minDist) {
+        minDist = dist[i];
+        u = i;
+      }
+    }
+    if (u === -1 || minDist === Infinity) break; // No more reachable nodes
+    visited[u] = true;
+    for (let v = 0; v < n; v++) {
+      if (!visited[v] && adj[u][v] !== Infinity) {
+        const alt = dist[u] + adj[u][v];
+        if (alt < dist[v]) {
+          dist[v] = alt;
+        }
+      }
+    }
+  }
+  return dist;
+}
+
+/**
+ * Computes the shortest path distance between two vertices using Dijkstra's algorithm.
+ * @param {Array<Array<number>>} adj - Adjacency matrix (n x n), with Infinity for no edge.
+ * @param {number} start - Index of the start vertex.
+ * @param {number} end - Index of the end vertex.
+ * @returns {number} Distance from start to end. Infinity if no path exists.
+ */
+export function dijkstraDistance(adj, start, end) {
+  const distances = dijkstraDistances(adj, start);
+  return distances[end];
+}
+
+/**
  * Computes the k-nearest neighbor graph for a set of 2D points.
  * Returns an adjacency matrix (n x n) where entry [i][j] is the Euclidean distance if j is among i's k nearest neighbors, otherwise Infinity.
  * @param {Array<{x: number, y: number}>} data - Array of 2D points.
@@ -210,4 +257,133 @@ export function projectOntoFirstPrincipalComponent(data) {
   const reconstructed = math.add(projected, mean);
 
   return reconstructed.toArray();
+}
+
+/* -------------- Code for doing MDS ------------------ */
+
+export function computeMDS(pairwiseDistances, nComponents = 2) {
+  /**
+   * Computes Multidimensional Scaling (MDS) projection from pairwise distances.
+   * @param {Array<Array<number>>} pairwiseDistances - Symmetric matrix of pairwise distances (n x n).
+   * @param {number} [nComponents=2] - Number of dimensions to project into.
+   * @returns {Object} { coordinates: Array<Array<number>>, eigenvectors: Array<Array<number>> } - Projected coordinates and eigenvectors.
+   */
+  /* Given pairwise distances compute the MDS projection */
+  const n = pairwiseDistances.length;
+  const D = math.matrix(pairwiseDistances);
+  const D2 = math.square(D); // Element-wise square
+
+  // Centering matrix
+  const I = math.identity(n);
+  const ones = math.ones(n, n);
+  const J = math.divide(ones, n);
+  const C = math.subtract(I, J);
+
+  // Double centering
+  const B = math.multiply(math.multiply(C, D2), C);
+  B = math.multiply(B, -0.5);
+
+  // Eigen decomposition
+  const eig = math.eigs(B);
+  const eigenVectors = eig.eigenvectors.sort((a, b) => b.value - a.value);
+  const values = eigenVectors.map((e) => e.value);
+  const vectors = eigenVectors.map((e) => e.vector);
+
+  // Take top nComponents
+  const selectedValues = values.slice(0, nComponents);
+  const selectedVectors = vectors.slice(0, nComponents);
+
+  // Coordinates
+  const coords = [];
+  for (let i = 0; i < n; i++) {
+    const point = [];
+    for (let j = 0; j < nComponents; j++) {
+      point.push(
+        selectedVectors[j][i] * Math.sqrt(Math.max(0, selectedValues[j]))
+      );
+    }
+    coords.push(point);
+  }
+
+  return {
+    coordinates: coords,
+    eigenvectors: selectedVectors,
+  };
+}
+
+export function computeEuclideanPairwiseDistances(data) {
+  /**
+   * Computes the pairwise Euclidean distances between all data points.
+   * @param {Array<Array<number>>} data - 2D array of data points (n_samples x n_features).
+   * @returns {Array<Array<number>>} Symmetric matrix of pairwise Euclidean distances (n x n).
+   */
+  // Return a matrix of pairwise distances between the data points
+  const n = data.length;
+  const distanceMatrix = Array(n)
+    .fill()
+    .map(() => Array(n).fill(0));
+
+  for (let i = 0; i < n; i++) {
+    for (let j = i + 1; j < n; j++) {
+      const distance = math.distance(data[i], data[j]);
+      distanceMatrix[i][j] = distance;
+      distanceMatrix[j][i] = distance; // Symmetric matrix
+    }
+  }
+
+  return distanceMatrix;
+}
+
+export function computeEuclideanMDS(data) {
+  /**
+   * Computes Euclidean MDS by first calculating pairwise Euclidean distances, then applying MDS.
+   * @param {Array<Array<number>>} data - 2D array of data points (n_samples x n_features).
+   * @returns {Object} { coordinates: Array<Array<number>>, eigenvectors: Array<Array<number>> } - MDS projection and eigenvectors.
+   */
+  // Compute the pairwise distances then do MDS on them
+  const euclideanPairwiseDistances = computeEuclideanPairwiseDistances(data);
+  return computeMDS(euclideanPairwiseDistances);
+}
+
+export function computeGeodesicPairwiseDistances(adjacencyMatrix) {
+  /**
+   * Computes geodesic pairwise distances using Dijkstra's algorithm for all pairs.
+   * @param {Array<Array<number>>} adjacencyMatrix - Adjacency matrix (n x n), with edge weights or Infinity for no edge.
+   * @returns {Array<Array<number>>} Symmetric matrix of geodesic distances (n x n), with Infinity for unreachable pairs.
+   */
+  /* 
+    Compute the geodesic distances using Dijkstra's algorithm 
+    between each element in the given adjacency matrix 
+  */
+  const n = adjacencyMatrix.length;
+  const distanceMatrix = Array.from({ length: n }, () =>
+    Array(n).fill(Infinity)
+  );
+
+  for (let i = 0; i < n; i++) {
+    const distances = dijkstraDistances(adjacencyMatrix, i);
+    for (let j = 0; j < n; j++) {
+      distanceMatrix[i][j] = distances[j];
+    }
+  }
+
+  return distanceMatrix;
+}
+
+export function computeIsomap(data, k) {
+  /**
+   * Performs Isomap dimensionality reduction.
+   * @param {Array<{x: number, y: number}>} data - Array of 2D data points.
+   * @param {number} k - Number of nearest neighbors for graph construction.
+   * @returns {Object} { coordinates: Array<Array<number>>, eigenvectors: Array<Array<number>> } - MDS projection and eigenvectors.
+   */
+  // This is basically MDS on the geodesic pairwise distance matrix
+  // NOTE: Assuming going from 2 to 1 dimension here.
+  // 1. Construct KNN graph
+  const knnAdjacencyMatrix = computeKNearestNeighborGraph(data, k);
+  // 2. Compute the geodesic distances in this graph.
+  const geodesicDistances =
+    computeGeodesicPairwiseDistances(knnAdjacencyMatrix);
+  // 3. Compute MDS on these geodesic pairwise distances
+  return computeMDS(geodesicDistances);
 }

@@ -1,3 +1,4 @@
+import * as d3 from "d3";
 // Helper: Box-Muller transform for standard normal
 export function gaussianRandom() {
   let u = 0,
@@ -130,4 +131,31 @@ export function generateNoisySineWave(
     tArr.push(t);
   }
   return { data, t: tArr };
+}
+
+/**
+ * Plots epsilon balls around each point and connects points within epsilon distance.
+ * @param {{data: Array<{x: number, y: number}>, t: Array<number>}} dataset
+ * @param {number} width - Width of the SVG canvas
+ * @param {number} height - Height of the SVG canvas
+ * @param {number} margin - Margin around the plot
+ * @returns {{xScale: function, yScale: function}}
+ */
+export function computeDataScales(dataset, width, height, margin) {
+  const dataArr = dataset.data;
+  const xs = dataArr.map((p) => p.x);
+  const ys = dataArr.map((p) => p.y);
+  const xExtent = d3.extent(xs);
+  const yExtent = d3.extent(ys);
+  const xPad = (xExtent[1] - xExtent[0]) * 0.1;
+  const yPad = (yExtent[1] - yExtent[0]) * 0.1;
+  const xScale = d3
+    .scaleLinear()
+    .domain([xExtent[0] - xPad, xExtent[1] + xPad])
+    .range([margin, width - margin]);
+  const yScale = d3
+    .scaleLinear()
+    .domain([yExtent[0] - yPad, yExtent[1] + yPad])
+    .range([height - margin, margin]);
+  return { xScale, yScale };
 }
