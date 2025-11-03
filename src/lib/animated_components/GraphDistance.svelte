@@ -3,7 +3,10 @@
   import * as settings from "$lib/settings.js";
   import { onMount } from "svelte";
   import { generateNoisySineWave } from "$lib/utils/data.js";
-  import { computeKNearestNeighborGraph, dijkstraShortestPath } from "$lib/utils/math.js";
+  import {
+    computeKNearestNeighborGraph,
+    dijkstraShortestPath,
+  } from "$lib/utils/math.js";
 
   import Katex from "$lib/components/Katex.svelte";
 
@@ -12,7 +15,7 @@
   export let margin = 40;
   export let k = 5;
   export let radius = 5;
-  export let active = true;
+  export let active = false;
   export let pointOpacity = 0.2;
   export let numPoints = 180;
   export let noiseLevel = 0.02;
@@ -20,7 +23,7 @@
   export let graphColor = "#1976d2";
   export let traversalColor = "#ff6b35";
   export let animationSpeed = 50;
-  export let pauseBetweenTraversals = 1000; 
+  export let pauseBetweenTraversals = 1000;
 
   let showScatterPlot = true;
   let showKNNGraph = true;
@@ -66,14 +69,7 @@
   }
 
   // Draw scatter points with constant blue color and click-to-highlight
-  function plotScatter(
-    svg,
-    dataset,
-    xScale,
-    yScale,
-    radius,
-    withinEpsilon
-  ) {
+  function plotScatter(svg, dataset, xScale, yScale, radius, withinEpsilon) {
     svg.selectAll("g.scatter-group").remove();
     const dataArr = dataset.data;
     const scatterGroup = svg.append("g").attr("class", "scatter-group");
@@ -87,7 +83,9 @@
       .attr("cy", (d) => yScale(d.y))
       .attr("r", radius)
       .attr("fill", graphColor)
-      .attr("opacity", (d, i) => (withinEpsilon[i] ? pointOpacity * 2 : pointOpacity))
+      .attr("opacity", (d, i) =>
+        withinEpsilon[i] ? pointOpacity * 2 : pointOpacity
+      )
       .style("cursor", "pointer")
       .on("click", function (event, d) {
         console.log("Point clicked:", d);
@@ -150,7 +148,8 @@
     animatingTraversal = true;
     if (!dataset || !xScale || !yScale) return;
 
-    const targetEndIdx = endIdx !== null ? endIdx : Math.floor(dataset.data.length / 2);
+    const targetEndIdx =
+      endIdx !== null ? endIdx : Math.floor(dataset.data.length / 2);
     const dataArr = dataset.data;
 
     // Compute the adjacency matrix
@@ -172,6 +171,82 @@
         svg.selectAll("g.traversal-path-group").remove();
         const pathGroup = svg.append("g").attr("class", "traversal-path-group");
 
+        // Add blur filter for label backgrounds
+        const defs = svg.select("defs");
+        if (defs.empty()) {
+          svg
+            .append("defs")
+            .append("filter")
+            .attr("id", "blur")
+            .append("feGaussianBlur")
+            .attr("stdDeviation", 1);
+        }
+
+        // Add labels for start and end points
+        const startPoint = dataArr[startIdx];
+        const endPoint = dataArr[targetEndIdx];
+
+        // Determine label positions based on x-coordinates
+        const isStartLeft = xScale(startPoint.x) < xScale(endPoint.x);
+        const startLabelX = isStartLeft
+          ? xScale(startPoint.x) - 15
+          : xScale(startPoint.x) + 15;
+        const endLabelX = isStartLeft
+          ? xScale(endPoint.x) + 15
+          : xScale(endPoint.x) - 15;
+
+        // Start label background
+        pathGroup
+          .append("rect")
+          .attr("x", startLabelX - 15)
+          .attr("y", yScale(startPoint.y) - 9)
+          .attr("width", 30)
+          .attr("height", 18)
+          .attr("fill", "white")
+          .attr("opacity", 0.7)
+          .attr("rx", 3)
+          .attr("filter", "url(#blur)");
+
+        // Start label
+        pathGroup
+          .append("text")
+          .attr("x", startLabelX)
+          .attr("y", yScale(startPoint.y))
+          .attr("text-anchor", "middle")
+          .attr("font-size", "22px")
+          .attr("fill", traversalColor)
+          .text("x")
+          .append("tspan")
+          .attr("dy", "0.3em")
+          .attr("font-size", "12px")
+          .text("i");
+
+        // End label background
+        pathGroup
+          .append("rect")
+          .attr("x", endLabelX - 15)
+          .attr("y", yScale(endPoint.y) - 9)
+          .attr("width", 30)
+          .attr("height", 18)
+          .attr("fill", "white")
+          .attr("opacity", 0.7)
+          .attr("rx", 3)
+          .attr("filter", "url(#blur)");
+
+        // End label
+        pathGroup
+          .append("text")
+          .attr("x", endLabelX)
+          .attr("y", yScale(endPoint.y))
+          .attr("text-anchor", "middle")
+          .attr("font-size", "18px")
+          .attr("fill", traversalColor)
+          .text("x")
+          .append("tspan")
+          .attr("dy", "0.3em")
+          .attr("font-size", "12px")
+          .text("j");
+
         // Now animate the traversal, drawing nodes as we go
         let currentIndex = 0;
 
@@ -182,9 +257,11 @@
               setTimeout(() => {
                 // Clear the path and restart with new random points
                 animatingTraversal = false;
-                svg.selectAll("g.traversal-path-group").remove();
-                const { startIdx, endIdx } = getRandomIndices(dataArr.length);
-                animateGraphTraversal(startIdx, endIdx);
+                if (!animatingTraversal && active) {
+                  svg.selectAll("g.traversal-path-group").remove();
+                  const { startIdx, endIdx } = getRandomIndices(dataArr.length);
+                  animateGraphTraversal(startIdx, endIdx);
+                }
               }, 500); // Short pause after clearing
             }, pauseBetweenTraversals); // Configurable pause before clearing
             resolve();
@@ -242,11 +319,20 @@
     plotKNNGraph(svg, dataset, k, xScale, yScale);
   }
 
-  $: if (dataset && svgEl && animateTraversal) {
+  $: if (
+    dataset &&
+    svgEl &&
+    animateTraversal &&
+    active &&
+    !animatingTraversal
+  ) {
     const svg = d3.select(svgEl);
     plotKNNGraph(svg, dataset, k, xScale, yScale);
-    const { startIdx, endIdx } = getRandomIndices(dataset.data.length);
-    animateGraphTraversal(startIdx, endIdx);
+    // Start graph traversal animation after a delay
+    if (!animatingTraversal && active) {
+      const { startIdx, endIdx } = getRandomIndices(dataset.data.length);
+      animateGraphTraversal(startIdx, endIdx);
+    }
   }
 
   onMount(() => {
@@ -260,12 +346,6 @@
 
     // Show scatter plot by default
     showScatterPlot = true;
-
-    // Start graph traversal animation after a delay
-    setTimeout(() => {
-      const { startIdx, endIdx } = getRandomIndices(dataset.data.length);
-      animateGraphTraversal(startIdx, endIdx);
-    }, 2000);
   });
 </script>
 
