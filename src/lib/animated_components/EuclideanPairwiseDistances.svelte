@@ -4,6 +4,7 @@
   import { onMount } from "svelte";
   import { generateNoisySineWave } from "$lib/utils/data.js";
 
+  export let svgEl;
   export let width = 500;
   export let height = 300;
   export let margin = 40;
@@ -21,7 +22,6 @@
   let showScatterPlot = false;
   let animateDistances = false;
   let animationInProgress = false;
-  let svgEl; // reference to the <svg> element
   let dataset = null;
   let highlightedIdx = null;
   let xScale = null;
@@ -185,23 +185,3 @@
     highlightedIdx = Math.floor(Math.random() * dataset.data.length);
   });
 </script>
-
-<div
-  class="text-plot"
-  on:mouseenter={() => (active = true)}
-  on:mouseleave={() => (active = false)}
-  role="region"
-  aria-label="Intro visualization section"
->
-  <div class="text-container">
-    <h2>The Limitations of Euclidean Distance</h2>
-  </div>
-  <div class="plot">
-    <svg
-      bind:this={svgEl}
-      {width}
-      {height}
-      style:opacity={active ? 1 : settings.inactiveOpacity}
-    ></svg>
-  </div>
-</div>

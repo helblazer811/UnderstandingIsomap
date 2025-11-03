@@ -10,6 +10,7 @@
 
   import Katex from "$lib/components/Katex.svelte";
 
+  export let svgEl; // reference to the <svg> element
   export let width = 500;
   export let height = 600;
   export let margin = 40;
@@ -28,7 +29,6 @@
   let showScatterPlot = true;
   let showKNNGraph = true;
   let animateTraversal = true;
-  let svgEl; // reference to the <svg> element
   let dataset = null;
   let highlightedIdx = null;
   let tempHighlightedIdx = null;
@@ -348,43 +348,3 @@
     showScatterPlot = true;
   });
 </script>
-
-<div
-  class="text-plot"
-  on:mouseenter={() => (active = true)}
-  on:mouseleave={() => (active = false)}
-  role="region"
-  aria-label="Intro visualization section"
->
-  <div class="text-container">
-    <h2>Measuring Distance in a Graph</h2>
-    <p>
-      Now that we have a graph that captures the local similarity structure of
-      our data Many dimensionality reduction techniques capture this local
-      similarity structure in the form of a graph. We can take this <Katex
-        math={"\\epsilon"}
-      /> An interesting way to see this is to draw a circle around a point and note
-      that the closest points We are interested in embedding our data in a way that
-      preserves its local structure. One way to capture the local structure of data
-      is through a nearest neighbor graph. We can define a graph with adjacency matrix
-      <Katex math={"A"} /> where
-      <Katex math={"A_{ij} = 1"} /> if point <Katex math={"i"} /> is among the <Katex
-        math={"k"}
-      /> nearest neighbors of point <Katex math={"j"} /> or vice versa, and <Katex
-        math={"A_{ij} = 0"}
-      /> otherwise.
-      <br />
-      <em> Why can't we just use Euclidean distance?</em>
-    </p>
-
-    <h2>Measuring Geodesic Distances</h2>
-  </div>
-  <div class="plot">
-    <svg
-      bind:this={svgEl}
-      {width}
-      {height}
-      style:opacity={active ? 1 : settings.inactiveOpacity}
-    ></svg>
-  </div>
-</div>

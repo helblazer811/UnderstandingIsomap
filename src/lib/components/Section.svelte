@@ -25,7 +25,7 @@
       {height}
       style:opacity={active ? 1 : settings.inactiveOpacity}
     ></svg>
-    <slot name="visualization" svgEl={svgEl} width={width} height={height}></slot>
+    <slot name="visualization" {svgEl} width={width} height={height}></slot>
   </div>
 </div>
 
@@ -36,7 +36,7 @@
     width: 100%;
     /* position: relative; */
     gap: 20px; /* optional spacing between text and plot */
-    align-items: flex-start;
+    align-items: center;
   }
 
   .text-container {
@@ -46,7 +46,7 @@
     margin-left: 80px;
   }
 
-  .text-plot-container .plot {
+  .text-plot-section .plot {
     flex: 1; /* each takes equal horizontal space */
     height: 100%;
     display: flex;

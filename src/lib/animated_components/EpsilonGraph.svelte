@@ -5,9 +5,8 @@
   import { generateNoisySineWave } from "$lib/utils/data.js";
   import { computeEpsilonNeighborhoodGraph } from "$lib/utils/math.js";
   import { computeDataScales } from "$lib/utils/data.js";
-  import Katex from "$lib/components/Katex.svelte";
-  import ActionLink from "$lib/components/ActionLink.svelte";
 
+  export let epsilon = 1;
   export let width = 500;
   export let height = 600;
   export let margin = 40;
@@ -18,14 +17,12 @@
   export let pointOpacity = 0.9;
   export let numPoints = 180;
   export let noiseLevel = 0.1;
-  let svgEl; // reference to the <svg> element
+  export let svgEl; // reference to the <svg> element
 
   let showSingleEpsilonBall = true;
   let showAllEpsilonBalls = false;
   let animatingAllBalls = false;
   let showEpsilonBallGraph = false;
-  let epsilon = 1;
-  let k = 5;
   let dataset = null;
   let highlightedIdx = null;
   let tempHighlightedIdx = null;
@@ -426,117 +423,3 @@
     }
   });
 </script>
-
-<div
-  class="text-plot"
-  on:mouseenter={() => (active = true)}
-  on:mouseleave={() => (active = false)}
-  role="region"
-  aria-label="Intro visualization section"
->
-  <div class="text-container">
-    <h2>Capturing the Local Structure of Data</h2>
-    <p>
-      We've established that a linear method like PCA is a poor choice for
-      uncovering the true structure of our spiral dataset. An interesting
-      observation about this dataset is that, while Euclidean distance may not
-      be a good measure of similarity between points that are far apart, it
-      works reasonably well for points that are close together! One way to see
-      this is to draw a circle around a point (called an epsilon neighborhood).
-      That is the region about a point <Katex math={"x_i"} /> defined as
-      <Katex
-        math={"N_\\epsilon(x_i) = \\{ x_j : ||x_i - x_j||_2 < \\epsilon \\}"}
-        displayMode={true}
-      />
-      for some small value of <Katex math={"\\epsilon"} />. Look and notice that
-      the points that fall within this circle when <Katex math={"\\epsilon"} /> is
-      small are also close to the point along the spiral's intrinsic dimension.
-    </p>
-    <div class="slider-container">
-      <label class="slider-main-label">
-        <Katex math={"\\epsilon"} />
-      </label>
-      <div class="slider-row">
-        <span class="slider-value-label">0</span>
-        <input
-          type="range"
-          min="0"
-          max="5"
-          step="0.01"
-          bind:value={epsilon}
-          class="slider"
-        />
-        <span class="slider-value-label">5</span>
-      </div>
-    </div>
-
-    <p>
-      A powerful perspective in many dimensionality reduction techniques is to
-      represent data as a graph, where the connections between points in our
-      dataset capture their local similarity structure. This is central to many
-      more powerful dimensionality reduction techniques like <a href="">t-SNE</a
-      >
-      and
-      <a href="">UMAP</a>.
-    </p>
-    <p>
-      One interesting choice for constructing a graph that captures local
-      similarity is to use these <Katex math={"\\epsilon"} /> neighborhoods. If two
-      points lie within each other's <Katex math={"\\epsilon"} /> neighborhoods,
-      <ActionLink
-        action={() => {
-          showSingleEpsilonBall = false;
-          showAllEpsilonBalls = true;
-          showEpsilonBallGraph = false;
-          animatingAllBalls = true;
-        }}>we can connect them with an edge in the graph.</ActionLink>
-      We can represent this graph with an adjacency matrix <Katex math={"A"} /> where
-      <Katex math={"A_{ij} = 1"} /> if points <Katex math={"i"} /> and <Katex
-        math={"j"}
-      /> are connected and <Katex math={"A_{ij} = 0"} /> otherwise. Another simple
-      choice is to connect each point to its k-nearest neighbors.
-    </p>
-  </div>
-  <div class="plot">
-    <svg
-      bind:this={svgEl}
-      {width}
-      {height}
-      style:opacity={active ? 1 : settings.inactiveOpacity}
-    ></svg>
-  </div>
-</div>
-
-<style>
-  .slider-container {
-    width: 550px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    margin: 1em 0;
-  }
-  .slider-row {
-    display: flex;
-    align-items: center;
-    width: 100%;
-    justify-content: center;
-    gap: 0.5em;
-  }
-  .slider {
-    width: 380px;
-    max-width: 90%;
-    margin-bottom: 0.5em;
-  }
-  .slider-main-label {
-    font-size: 1.1em;
-    font-weight: bold;
-    /* color: #1976d2; */
-    /* margin-bottom: 0.2em; */
-  }
-  .slider-value-label {
-    font-size: 1em;
-    color: #555;
-    min-width: 2em;
-    text-align: center;
-  }
-</style>

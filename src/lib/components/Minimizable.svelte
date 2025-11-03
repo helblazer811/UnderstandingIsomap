@@ -46,7 +46,7 @@
     border: 1px solid #ddd;
     border-radius: 4px;
     margin: 10px 0;
-    margin-left: 80px;
+    /* margin-left: 80px; */
     overflow: hidden;
     width: 100%;
     max-width: 550px;

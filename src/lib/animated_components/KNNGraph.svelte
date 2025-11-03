@@ -4,10 +4,10 @@
   import { computeKNearestNeighborGraph } from "$lib/utils/math.js";
   import { generateNoisySineWave } from "$lib/utils/data.js";
   import { computeDataScales } from "$lib/utils/data.js";
-  import Katex from "$lib/components/Katex.svelte";
-  import ActionLink from "$lib/components/ActionLink.svelte";
   import { onMount } from "svelte";
 
+  export let k;
+  export let svgEl; // reference to the <svg> element
   export let width = 500;
   export let height = 300;
   export let margin = 40;
@@ -21,9 +21,6 @@
   export let edgeWidth = 1.5;
   // export let pointColor = "#1976d2";
   export let graphColor = "#1976d2";
-  let k = 5;
-
-  let svgEl; // reference to the <svg> element
 
   let dataset = null;
   // let highlightedIdx = null;
@@ -129,79 +126,3 @@
     yScale = scales.yScale;
   });
 </script>
-
-<div
-  class="text-plot"
-  on:mouseenter={() => (active = true)}
-  on:mouseleave={() => (active = false)}
-  role="region"
-  aria-label="Intro visualization section"
->
-  <div class="text-container">
-    <!-- K slider -->
-    <!-- <input type="range" min="1" max="10" step="1" value="5" /> -->
-    <div class="slider-container">
-      <label class="slider-main-label">
-        <Katex math={"k"} />
-      </label>
-      <div class="slider-row">
-        <span class="slider-value-label">1</span>
-        <input
-          type="range"
-          min="1"
-          max="20"
-          step="1"
-          bind:value={k}
-          class="slider"
-        />
-        <span class="slider-value-label">20</span>
-      </div>
-      <p>
-        This is the construction that Isomap uses to build its graph, and what
-        we'll be using in this article.
-      </p>
-    </div>
-  </div>
-  <div class="plot">
-    <svg
-      bind:this={svgEl}
-      {width}
-      {height}
-      style:opacity={active ? 1 : settings.inactiveOpacity}
-    ></svg>
-  </div>
-</div>
-
-<style>
-  .slider-container {
-    width: 550px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    margin: 1em 0;
-  }
-  .slider-row {
-    display: flex;
-    align-items: center;
-    width: 100%;
-    justify-content: center;
-    gap: 0.5em;
-  }
-  .slider {
-    width: 380px;
-    max-width: 90%;
-    margin-bottom: 0.5em;
-  }
-  .slider-main-label {
-    font-size: 1.1em;
-    font-weight: bold;
-    /* color: #1976d2; */
-    /* margin-bottom: 0.2em; */
-  }
-  .slider-value-label {
-    font-size: 1em;
-    color: #555;
-    min-width: 2em;
-    text-align: center;
-  }
-</style>

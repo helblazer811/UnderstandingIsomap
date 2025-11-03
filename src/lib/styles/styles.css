@@ -91,3 +91,35 @@ p {
   line-height: 1.5;
   font-family: "Segoe UI", Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
 }
+
+.slider-container {
+    width: 550px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin: 1em 0;
+  }
+  .slider-row {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    justify-content: center;
+    gap: 0.5em;
+  }
+  .slider {
+    width: 380px;
+    max-width: 90%;
+    margin-bottom: 0.5em;
+  }
+  .slider-main-label {
+    font-size: 1.1em;
+    font-weight: bold;
+    /* color: #1976d2; */
+    /* margin-bottom: 0.2em; */
+  }
+  .slider-value-label {
+    font-size: 1em;
+    color: #555;
+    min-width: 2em;
+    text-align: center;
+  }
