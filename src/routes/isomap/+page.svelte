@@ -6,14 +6,19 @@
   //   import * as state from "$lib/stores/state.js";
 
   import ActionLink from "$lib/components/ActionLink.svelte";
+  import Quote from "$lib/components/Quote.svelte";
   import Katex from "$lib/components/Katex.svelte";
   import IntroScatter from "$lib/animated_components/IntroScatter.svelte";
+  import IntroScatterSlotted from "$lib/animated_components/IntroScatterSlotted.svelte";
   import PCAScatter from "$lib/animated_components/PCAScatter.svelte";
   import EpsilonGraph from "$lib/animated_components/EpsilonGraph.svelte";
-  import EpsilonBall from "$lib/animated_components/EpsilonGraph.svelte";
+  import GraphDistance from "$lib/animated_components/GraphDistance.svelte";
+  import KNNGraph from "$lib/animated_components/KNNGraph.svelte";
+  import MDSPlot from "$lib/animated_components/MDSPlot.svelte";
+  import EuclideanPairwiseDistances from "$lib/animated_components/EuclideanPairwiseDistances.svelte";
 
   import { generateNoisySpiral } from "$lib/utils/data.js";
-  import GraphDistance from "$lib/animated_components/GraphDistance.svelte";
+  import Section from "$lib/components/Section.svelte";
   //   import { ScatterPlot } from "$lib/components/ScatterPlot.js";
   //   import { animateScatterToSpiral } from "$lib/animated_components/createScatter.jscatter.js";
   //   import { plotIntrinsicDimensionAxis } from "$lib/animated_components/intrinsicDimensionAxis.jsonAxis.js";
@@ -37,44 +42,59 @@
 <!-- Left column: text -->
 <div class="text-column">
   <!-- All your headings, paragraphs, ActionLinks, etc. go here -->
-   <IntroScatter {dataset}/>
-   <PCAScatter {dataset} />
-   <EpsilonGraph />
-   <GraphDistance />
-
-
-  <h2>Multidimensional Scaling</h2>
-  <p>
-    Given our geodisic distance matrix <Katex math={"D"} />, we can use
-    <a> multi-dimensional scaling </a>
-    to infer low rank embeddings that preserve the similarity of our original points.
-    That is we want to find coordinates
-    <Katex math={"y_1, \\dots, y_n \\in \\mathbb{R}^p"} /> such that
-    <Katex math={"||y_i - y_j||^2 \\approx d_{ij}^2"} />
-
-    Let <Katex math={"D"} /> be such that <Katex math={"D_{ij}"} /> is the geodesic
-    distance beween data points
-    <Katex math={"x_i"} /> and <Katex math={"x_j"} />. We want to compute a gram
-    matrix (a matrix of inner products between our points). Normally if we
-    wanted to use the Euclidean metric we could compute the Gram matrix as <Katex
-      math={"XX^T"}
-    />. However, we only have access to distances between points. However, we
-    can recover the Gram matrix from our squared distance matrix <Katex
-      math={"D^2"}
-    />. The inner product between points <Katex math={"y_i"} /> and <Katex
-      math={"y_j"}
-    /> can be expressed in terms of distances as
-    <a href="">Dimensionality reduction</a> aims to express high-dimensional
-    information in a low dimensional form in a way that preserves the essence of
-    the data. Perhaps the simplest approach to dimensionality reduction is
-    <a href="">principal components analysis (PCA)</a>, which leverages tools
-    from linear algebra to find the axes in data along which the data has
-    maximum variation. If we center data by subtracting the mean <Katex
-      math={"\\bar{y} = \\frac{1}{n} \\sum_{i=1}^n y_i"}
-    />, we have that However, we can use the identity that the Gram matrix <Katex
-      math={"B"}
-    /> can be computed by double centering the squared distance matrix.
-
-    <Katex math={"B = -\\frac{1}{2} H D^2 H"} />
-  </p>
+  <Section height={500} width={500}>
+    <div slot="text">
+      <div class="article-header">
+        <h1 class="hed">Dimensionality Reduction with Isomap</h1>
+        <!-- <h2 class="dek">Nonlinear Dimensionality Reduction</h2> -->
+        <div class="byline">
+          By: <a href="https://alechelbling.com">Alec Helbling</a>
+        </div>
+      </div>
+      <Quote>
+        "To deal with hyper-planes in a 14-dimensional space, visualize a 3D
+        space and say 'fourteen' to yourself very loudly. Everyone does it." -
+        Geoffrey Hinton
+      </Quote>
+      <p>
+        In many domains, like computational imaging or genomics, data comes in
+        the form of high-dimensional signals that are challenging for humans to
+        directly reason about, as our intuition is generally confined to two or
+        three dimensions. The field of <a href="">dimensionality reduction</a> aims
+        to compress high-dimensional data into lower-dimensional representations
+        that preserve their relevant structure while being much easier for people
+        to interpret.
+      </p>
+      <p>
+        On the right we have a classic spiral dataset, which is a one
+        dimensional <em>manifold</em>
+        embedded in a two dimensional space. The
+        <span class="viridis-gradient-text">color of each point </span>
+        represents its position along this intrinsic dimension.
+        <em
+          >How can we capture the intrinsic structure of our low dimensional
+          data (1D) embedded in a higher dimensional (2D) space?</em
+        >
+      </p>
+      <p>
+        In this article, I'll be exploring <a href="">Isomap</a>, a classic
+        non-linear dimensionality reduction technique that seeks to create a low
+        dimensional embedding of data that preserves its local similarity
+        structure. Isomap builds upon the manifold hypothesis, which posits that
+        data often lies on a low-dimensional manifold, despite existing in a
+        higher dimensional space. This is a classic assumption that is central
+        to many modern dimensionality reduction techniques like
+        <a href="">t-SNE</a>
+        and <a href="">UMAP</a>.
+      </p>
+    </div>
+    <IntroScatterSlotted {dataset} let:svgEl svgEl={svgEl} slot="visualization"/>
+  </Section>
+  <IntroScatter {dataset} />
+  <MDSPlot {dataset} />
+  <EuclideanPairwiseDistances />
+  <!-- <PCAScatter {dataset} /> -->
+  <EpsilonGraph />
+  <KNNGraph />
+  <GraphDistance />
 </div>

@@ -1,10 +1,7 @@
 <script>
   import * as d3 from "d3";
-  import { onMount } from "svelte";
   import * as settings from "$lib/settings.js";
 
-  import Quote from "$lib/components/Quote.svelte";
-  import ActionLink from "$lib/components/ActionLink.svelte";
   import { generateNoiseFreeSpiralPoints } from "$lib/utils/data.js";
 
   export let dataset;
@@ -15,8 +12,7 @@
   export let active = true;
   export let colorScheme = d3.interpolateViridis;
   export let pointOpacity = 0.6;
-
-  let svgEl; // reference to the <svg> element
+  export let svgEl; // reference to the <svg> element
 
   /**
    * Animates existing points to their spiral positions.
@@ -271,64 +267,3 @@
     animateIntrinsicDimensionAxis(svg, dataset, 3000);
   }
 </script>
-
-<div
-  class="text-plot"
-  on:mouseenter={() => (active = true)}
-  on:mouseleave={() => (active = false)}
-  role="region"
-  aria-label="Intro visualization section"
->
-  <div class="text-container">
-    <div class="article-header">
-      <h1 class="hed">Dimensionality Reduction with Isomap</h1>
-      <!-- <h2 class="dek">Nonlinear Dimensionality Reduction</h2> -->
-      <div class="byline">
-        By: <a href="https://alechelbling.com">Alec Helbling</a>
-      </div>
-    </div>
-    <Quote>
-      "To deal with hyper-planes in a 14-dimensional space, visualize a 3D space
-      and say 'fourteen' to yourself very loudly. Everyone does it." - Geoffrey
-      Hinton
-    </Quote>
-    <p>
-      In many domains, like computational imaging or genomics, data comes in the
-      form of high-dimensional signals that are challenging for humans to
-      directly reason about, as our intuition is generally confined to two or
-      three dimensions. The field of <a href="">dimensionality reduction</a> aims
-      to compress high-dimensional data into lower-dimensional representations that
-      preserve their relevant structure while being much easier for people to interpret.
-    </p>
-    <p>
-      On the right we have a classic spiral dataset, which is a one dimensional <em
-        >manifold</em
-      >
-      embedded in a two dimensional space. The
-      <span class="viridis-gradient-text">color of each point </span>
-      represents its position along this intrinsic dimension.
-      <em
-        >How can we capture the intrinsic structure of our low dimensional data
-        (1D) embedded in a higher dimensional (2D) space?</em
-      >
-    </p>
-    <p>
-      In this article, I'll be exploring <a href="">Isomap</a>, a classic
-      non-linear dimensionality reduction technique that seeks to create a low
-      dimensional embedding of data that preserves its local similarity
-      structure. Isomap builds upon the manifold hypothesis, which posits that
-      data often lies on a low-dimensional manifold, despite existing in a
-      higher dimensional space. This is a classic assumption that is central to
-      many modern dimensionality reduction techniques like <a href="">t-SNE</a>
-      and <a href="">UMAP</a>.
-    </p>
-  </div>
-  <div class="plot">
-    <svg
-      bind:this={svgEl}
-      {width}
-      {height}
-      style:opacity={active ? 1 : settings.inactiveOpacity}
-    ></svg>
-  </div>
-</div>

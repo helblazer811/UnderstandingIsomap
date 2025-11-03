@@ -91,32 +91,3 @@ p {
   line-height: 1.5;
   font-family: "Segoe UI", Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
 }
-
-.text-plot {
-  display: flex;              /* side-by-side layout */
-  flex-direction: row;
-  width: 100%;
-  /* position: relative; */
-  gap: 20px;                  /* optional spacing between text and plot */
-  align-items: flex-start;
-}
-
-.text-container {
-  flex: 1;                    /* each takes equal horizontal space */
-  width: 100%;
-  max-width: 550px;
-  margin-left: 80px;
-}
-
-.text-plot .plot {
-  flex: 1;                    /* each takes equal horizontal space */
-  height: 100%;
-  display: flex;
-  justify-content: center;    /* horizontal center */
-  align-items: center;        /* vertical center */
-}
-
-.text-plot .plot svg {
-  /* width: 100%; */
-  /* height: auto; */
-}

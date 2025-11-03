@@ -4,6 +4,7 @@
   import { onMount } from "svelte";
   import { generateNoisySineWave } from "$lib/utils/data.js";
   import { computeEpsilonNeighborhoodGraph } from "$lib/utils/math.js";
+  import { computeDataScales } from "$lib/utils/data.js";
   import Katex from "$lib/components/Katex.svelte";
   import ActionLink from "$lib/components/ActionLink.svelte";
 
@@ -32,32 +33,6 @@
   let yScale = null;
   let animatedEpsilonRadius = 0;
   let currentOpacity = 1.0;
-
-  /**
-   * Plots epsilon balls around each point and connects points within epsilon distance.
-   * @param {{data: Array<{x: number, y: number}>, t: Array<number>}} dataset
-   * @param {number} epsilon - Radius of the epsilon ball (in data space units)
-   */
-
-  // Compute scales for the dataset
-  function computeScales(dataset) {
-    const dataArr = dataset.data;
-    const xs = dataArr.map((p) => p.x);
-    const ys = dataArr.map((p) => p.y);
-    const xExtent = d3.extent(xs);
-    const yExtent = d3.extent(ys);
-    const xPad = (xExtent[1] - xExtent[0]) * 0.1;
-    const yPad = (yExtent[1] - yExtent[0]) * 0.1;
-    const xScale = d3
-      .scaleLinear()
-      .domain([xExtent[0] - xPad, xExtent[1] + xPad])
-      .range([margin, width - margin]);
-    const yScale = d3
-      .scaleLinear()
-      .domain([yExtent[0] - yPad, yExtent[1] + yPad])
-      .range([height - margin, margin]);
-    return { xScale, yScale };
-  }
 
   // Draw scatter points with t-based Viridis color and click-to-highlight
   function plotScatter(
@@ -426,7 +401,7 @@
     dataset = generateNoisySineWave(numPoints, 0.01, 110, 1.2, [0, 20]);
     // Compute scales
     if (dataset) {
-      const scales = computeScales(dataset);
+      const scales = computeDataScales(dataset, width, height, margin);
       xScale = scales.xScale;
       yScale = scales.yScale;
     }
@@ -460,7 +435,6 @@
   aria-label="Intro visualization section"
 >
   <div class="text-container">
-    <h1>The Isomap Algorithm</h1>
     <h2>Capturing the Local Structure of Data</h2>
     <p>
       We've established that a linear method like PCA is a poor choice for
@@ -515,40 +489,13 @@
           showAllEpsilonBalls = true;
           showEpsilonBallGraph = false;
           animatingAllBalls = true;
-        }}>we can connect them with an edge in the graph.</ActionLink
-      >
+        }}>we can connect them with an edge in the graph.</ActionLink>
       We can represent this graph with an adjacency matrix <Katex math={"A"} /> where
       <Katex math={"A_{ij} = 1"} /> if points <Katex math={"i"} /> and <Katex
         math={"j"}
       /> are connected and <Katex math={"A_{ij} = 0"} /> otherwise. Another simple
-      choice is to
-      <ActionLink action={() => {}}>
-        connect each point to its k-nearest neighbors.
-      </ActionLink>
+      choice is to connect each point to its k-nearest neighbors.
     </p>
-    <!-- K slider -->
-    <!-- <input type="range" min="1" max="10" step="1" value="5" /> -->
-    <div class="slider-container">
-      <label class="slider-main-label">
-        <Katex math={"k"} />
-      </label>
-      <div class="slider-row">
-        <span class="slider-value-label">1</span>
-        <input
-          type="range"
-          min="1"
-          max="20"
-          step="1"
-          bind:value={k}
-          class="slider"
-        />
-        <span class="slider-value-label">20</span>
-      </div>
-      <p>
-        This is the construction that Isomap uses to build its graph, and what
-        we'll be using in this article.
-      </p>
-    </div>
   </div>
   <div class="plot">
     <svg

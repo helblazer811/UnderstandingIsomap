@@ -15,13 +15,12 @@
   export let noiseLevel = 0.02;
   export let traversalOpacity = 1.0;
   export let graphColor = "#1976d2";
-  export let traversalColor = "#ff6b35";
   export let animationSpeed = 50;
-  export let pauseBetweenTraversals = 1000; 
+  export let pauseBetweenTraversals = 1000;
 
   let showScatterPlot = false;
-  let showDistances = false;
   let animateDistances = false;
+  let animationInProgress = false;
   let svgEl; // reference to the <svg> element
   let dataset = null;
   let highlightedIdx = null;
@@ -49,14 +48,7 @@
   }
 
   // Draw scatter points with constant blue color and click-to-highlight
-  function plotScatter(
-    svg,
-    dataset,
-    xScale,
-    yScale,
-    radius,
-    withinEpsilon
-  ) {
+  function plotScatter(svg, dataset, xScale, yScale, radius, withinEpsilon) {
     svg.selectAll("g.scatter-group").remove();
     const dataArr = dataset.data;
     const scatterGroup = svg.append("g").attr("class", "scatter-group");
@@ -70,21 +62,30 @@
       .attr("cy", (d) => yScale(d.y))
       .attr("r", radius)
       .attr("fill", graphColor)
-      .attr("opacity", (d, i) => (withinEpsilon[i] ? pointOpacity * 2 : pointOpacity))
+      .attr("opacity", (d, i) =>
+        withinEpsilon[i] ? pointOpacity * 2 : pointOpacity
+      )
       .style("cursor", "pointer")
       .on("mouseenter", function (event, d) {
         const idx = dataArr.indexOf(d);
         if (idx !== -1 && idx !== highlightedIdx) {
-        //   tempHighlightedIdx = idx;
-        highlightedIdx = idx;
+          //   tempHighlightedIdx = idx;
+          highlightedIdx = idx;
           animateDistances = true;
         }
-      })
+      });
   }
 
   // Function to animate drawing lines from a start point to all other points
-  async function animatingPairwiseDistances(svg, dataset, xScale, yScale, startIdx) {
+  async function animatingPairwiseDistances(
+    svg,
+    dataset,
+    xScale,
+    yScale,
+    startIdx
+  ) {
     if (!animateDistances) return;
+    animationInProgress = true;
     animateDistances = false;
     console.log("Starting pairwise distances animation");
 
@@ -92,7 +93,9 @@
     const startPoint = dataArr[startIdx];
 
     svg.selectAll("g.animation-lines-group").remove();
-    const animationGroup = svg.append("g").attr("class", "animation-lines-group");
+    const animationGroup = svg
+      .append("g")
+      .attr("class", "animation-lines-group");
 
     // Highlight the start point
     animationGroup
@@ -119,21 +122,37 @@
         .attr("y2", yScale(startPoint.y))
         .attr("stroke", graphColor)
         .attr("stroke-width", 2)
-        .attr("opacity", traversalOpacity)
+        .attr("opacity", traversalOpacity);
 
       // Animate the line extending to the end point
       await new Promise((resolve) => {
-        line
-          .transition()
-          .duration(animationSpeed)
-          .attr("x2", xScale(endPoint.x))
-          .attr("y2", yScale(endPoint.y))
-          .on("end", resolve);
+        if (animationInProgress) {
+          line
+            .transition()
+            .duration(animationSpeed)
+            .attr("x2", xScale(endPoint.x))
+            .attr("y2", yScale(endPoint.y))
+            .on("end", resolve);
+        }
       });
 
       // Pause briefly before next line
-      await new Promise((resolve) => setTimeout(resolve, pauseBetweenTraversals / 10));
+      await new Promise((resolve) => {
+        if (animationInProgress) {
+          setTimeout(resolve, pauseBetweenTraversals / 10);
+        }
+      });
     }
+
+    // Animation complete, wait cooldown then start with new random point
+    setTimeout(() => {
+      if (!animateDistances && animationInProgress) {
+        animationInProgress = false;
+        svg.selectAll("g.animation-lines-group").remove();
+        highlightedIdx = Math.floor(Math.random() * dataset.data.length);
+        animateDistances = true;
+      }
+    }, pauseBetweenTraversals);
   }
 
   $: if (dataset && svgEl && showScatterPlot) {
@@ -148,7 +167,10 @@
 
   onMount(() => {
     // Generate sine wave dataset
-    dataset = generateNoisySineWave(numPoints, noiseLevel, 20, 1, [0, 2 * Math.PI]);
+    dataset = generateNoisySineWave(numPoints, noiseLevel, 20, 1, [
+      0,
+      2 * Math.PI,
+    ]);
 
     // Compute scales
     const scales = computeScales(dataset);
@@ -161,7 +183,6 @@
 
     // Select a random node for highlightedIdx
     highlightedIdx = Math.floor(Math.random() * dataset.data.length);
-
   });
 </script>
 
