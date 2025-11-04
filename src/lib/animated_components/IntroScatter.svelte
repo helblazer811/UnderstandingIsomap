@@ -5,11 +5,11 @@
   import { generateNoiseFreeSpiralPoints } from "$lib/utils/data.js";
 
   export let dataset;
+  export let active = true;
   export let width = 500;
   export let height = 500;
   export let margin = 40;
   export let radius = 5;
-  export let active = true;
   export let colorScheme = d3.interpolateViridis;
   export let pointOpacity = 0.6;
   export let svgEl; // reference to the <svg> element
@@ -126,6 +126,7 @@
    * @param {number} durationMs - Animation duration in milliseconds (default 1200ms)
    */
   function animateIntrinsicDimensionAxis(svg, data, durationMs = 1200) {
+    console.log("Animating intrinsic dimension axis...");
     // Remove previous axis
     svg.selectAll("g.intrinsic-dimension-axis").remove();
 
@@ -257,7 +258,11 @@
       .text("Latent 1D Manifold");
   }
 
-  $: if ((active && dataset && svgEl) || (active && svgEl)) {
+  $: if (active) {
+    console.log("Animating intrinsic dimension axis...");
+  }
+
+  $: if (active && dataset && svgEl) {
     const svg = d3.select(svgEl);
     svg.selectAll("circle").remove();
 

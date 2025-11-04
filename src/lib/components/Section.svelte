@@ -25,7 +25,7 @@
       {height}
       style:opacity={active ? 1 : settings.inactiveOpacity}
     ></svg>
-    <slot name="visualization" {svgEl} width={width} height={height}></slot>
+    <slot name="visualization" {svgEl} {active} width={width} height={height}></slot>
   </div>
 </div>
 

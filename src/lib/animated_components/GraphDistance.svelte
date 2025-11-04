@@ -8,8 +8,6 @@
     dijkstraShortestPath,
   } from "$lib/utils/math.js";
 
-  import Katex from "$lib/components/Katex.svelte";
-
   export let svgEl; // reference to the <svg> element
   export let width = 500;
   export let height = 600;
@@ -30,6 +28,7 @@
   let showKNNGraph = true;
   let animateTraversal = true;
   let dataset = null;
+  let KNNAdjacencyMatrix = null;
   let highlightedIdx = null;
   let tempHighlightedIdx = null;
   let xScale = null;
@@ -86,27 +85,6 @@
       .attr("opacity", (d, i) =>
         withinEpsilon[i] ? pointOpacity * 2 : pointOpacity
       )
-      .style("cursor", "pointer")
-      .on("click", function (event, d) {
-        console.log("Point clicked:", d);
-        const idx = dataArr.indexOf(d);
-        if (idx !== -1) {
-          highlightedIdx = idx;
-          tempHighlightedIdx = null; // Clear temporary highlight on click
-          console.log("Clicked point index:", idx);
-        }
-      })
-      .on("mouseenter", function (event, d) {
-        const idx = dataArr.indexOf(d);
-        if (idx !== -1 && idx !== highlightedIdx) {
-          tempHighlightedIdx = idx;
-        }
-      })
-      .on("mouseleave", function (event, d) {
-        tempHighlightedIdx = null;
-        // Clean up the temporary epsilon ball group
-        d3.select(svgEl).selectAll("g.temp-epsilon-ball-group").remove();
-      });
 
     return { xScale, yScale };
   }
@@ -117,13 +95,10 @@
     const dataArr = dataset.data;
     const group = svg.append("g").attr("class", "knn-graph-group");
 
-    // Compute the k-nearest neighbor graph using the math.js function
-    const adjMatrix = computeKNearestNeighborGraph(dataArr, k);
-
     // Draw lines between connected pairs (where adjMatrix[i][j] is not Infinity)
     for (let i = 0; i < dataArr.length; i++) {
       for (let j = i + 1; j < dataArr.length; j++) {
-        if (adjMatrix[i][j] !== Infinity) {
+        if (KNNAdjacencyMatrix[i][j] !== Infinity) {
           const p1 = dataArr[i];
           const p2 = dataArr[j];
 
@@ -152,11 +127,8 @@
       endIdx !== null ? endIdx : Math.floor(dataset.data.length / 2);
     const dataArr = dataset.data;
 
-    // Compute the adjacency matrix
-    const adjMatrix = computeKNearestNeighborGraph(dataArr, k);
-
     // Find shortest path using Dijkstra
-    const path = dijkstraShortestPath(adjMatrix, startIdx, targetEndIdx);
+    const path = dijkstraShortestPath(KNNAdjacencyMatrix, startIdx, targetEndIdx);
 
     if (path.length === 0) {
       console.log("No path found between", startIdx, "and", targetEndIdx);
@@ -314,11 +286,6 @@
     plotScatter(svg, dataset, xScale, yScale, radius, []);
   }
 
-  $: if (dataset && svgEl && showKNNGraph) {
-    const svg = d3.select(svgEl);
-    plotKNNGraph(svg, dataset, k, xScale, yScale);
-  }
-
   $: if (
     dataset &&
     svgEl &&
@@ -326,13 +293,21 @@
     active &&
     !animatingTraversal
   ) {
-    const svg = d3.select(svgEl);
-    plotKNNGraph(svg, dataset, k, xScale, yScale);
+    // const svg = d3.select(svgEl);
+    // plotKNNGraph(svg, dataset, k, xScale, yScale);
     // Start graph traversal animation after a delay
     if (!animatingTraversal && active) {
       const { startIdx, endIdx } = getRandomIndices(dataset.data.length);
       animateGraphTraversal(startIdx, endIdx);
     }
+  }
+
+  $: if (dataset && svgEl && showKNNGraph) {
+    // Compute KNN graph and graph paths
+    KNNAdjacencyMatrix = computeKNearestNeighborGraph(dataset.data, k);
+    // Plot KNN graph
+    const svg = d3.select(svgEl);
+    plotKNNGraph(svg, dataset, k, xScale, yScale);
   }
 
   onMount(() => {

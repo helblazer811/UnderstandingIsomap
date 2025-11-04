@@ -198,8 +198,6 @@ export function computePCA(data, nComponents = null) {
   // 4. Sort eigenvalues/vectors by descending eigenvalue
   const sorted = eigenVectors.sort((a, b) => b.value - a.value);
 
-  console.log(sorted);
-
   const sortedValues = sorted.map((e) => e.value);
   const sortedVectors = sorted.map((e) => e.vector);
 
@@ -244,8 +242,6 @@ export function projectOntoFirstPrincipalComponent(data) {
   // Normalize pc1
   pc1 = math.divide(pc1, math.norm(pc1));
   // Compute projection scores (n_samples x 1)
-  console.log(X);
-  console.log(pc1);
   const scores = math.multiply(X, pc1); // shape: [n, 1]
   // Reconstruct projected vectors (n x 2)
   const projected = math.multiply(

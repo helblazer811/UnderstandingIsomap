@@ -9,7 +9,6 @@
   import Quote from "$lib/components/Quote.svelte";
   import Katex from "$lib/components/Katex.svelte";
   import IntroScatter from "$lib/animated_components/IntroScatter.svelte";
-  import IntroScatterSlotted from "$lib/animated_components/IntroScatter.svelte";
   import PCAScatter from "$lib/animated_components/PCAScatter.svelte";
   import EpsilonGraph from "$lib/animated_components/EpsilonGraph.svelte";
   import GraphDistance from "$lib/animated_components/GraphDistance.svelte";
@@ -96,7 +95,7 @@
         <a href="">t-SNE</a> and <a href="">UMAP</a>.
       </p>
     </div>
-    <IntroScatter {dataset} let:svgEl {svgEl} slot="visualization" />
+    <IntroScatter {dataset} let:active {active} let:svgEl {svgEl} slot="visualization" />
   </Section>
   <Section height={500} width={500}>
     <div slot="text">
@@ -155,15 +154,18 @@
         title="Explanation of Equivalence between Classical MDS and PCA"
       >
         <div>
-          <h2>Equivalence between Classical MDS and PCA</h2>
+          <h2>Equivalence Between Classical MDS and PCA</h2>
           <p>
             Interestingly, classical MDS with the Euclidean distance metric is
             equivalent to
-            <a href="">Principal Components Analysis (PCA)</a>. PCA seeks to
-            find a low-dimensional representation of data that maximizes the
-            variance along each dimension. This is done by computing the
-            covariance matrix
-            <Katex math={"C = \\frac{1}{n} X^T X"} />
+            <a href="">Principal Components Analysis (PCA)</a>.
+          </p>
+          <h3>Definition of PCA</h3>
+          <p>
+            PCA seeks to find a low-dimensional representation of data that
+            maximizes the variance along each dimension. This is done by
+            computing the covariance matrix
+            <Katex math={"C = \\frac{1}{n} X^T X"} displayMode={true}/>
             of the centered data <Katex
               math={"X \\in \\mathbb{R}^{n \\times d}"}
             />
@@ -177,6 +179,7 @@
               math={"V_p"}
             /> contains the top <Katex math={"p"} /> eigenvectors.
           </p>
+          <h3>Equivalence Explanation</h3>
           <p>
             The equivalence between these two formulations can be seen using the
             SVD of <Katex math={"X"} />
@@ -231,9 +234,17 @@
         </div>
       </Minimizable>
     </div>
-    <MDSPlot {dataset} let:svgEl {svgEl} slot="visualization" />
+    <MDSPlot
+      {dataset}
+      let:svgEl
+      {svgEl}
+      let:active
+      {active}
+      slot="visualization"
+    />
   </Section>
   <!-- <MDSPlot {dataset} /> -->
+  <!-- <PCAScatter {dataset} /> -->
   <Section width={500} height={300}>
     <div slot="text">
       <h2>Limitations of MDS with Euclidean Distance</h2>
@@ -245,9 +256,8 @@
         poor (global) measure of similarity between the points in our dataset.
       </p>
     </div>
-    <EuclideanPairwiseDistances let:svgEl {svgEl} slot="visualization" />
+    <EuclideanPairwiseDistances let:svgEl {svgEl} let:active {active} slot="visualization" />
   </Section>
-  <!-- <PCAScatter {dataset} /> -->
   <Section height={600} width={500}>
     <div slot="text">
       <h2>Capturing the Local Structure of Data</h2>
@@ -286,7 +296,6 @@
           <span class="slider-value-label">5</span>
         </div>
       </div>
-
       <p>
         A powerful perspective in many dimensionality reduction techniques is to
         represent data as a graph, where the connections between points in our
@@ -318,7 +327,7 @@
         choice is to connect each point to its k-nearest neighbors.
       </p>
     </div>
-    <EpsilonGraph let:svgEl {svgEl} {epsilon} slot="visualization" />
+    <EpsilonGraph let:svgEl {svgEl} let:active {active} {epsilon} slot="visualization" />
   </Section>
   <Section height={500} width={500}>
     <div slot="text">
@@ -371,6 +380,6 @@
 
       <h2>Measuring Geodesic Distances</h2>
     </div>
-    <GraphDistance let:svgEl {svgEl} slot="visualization"/>
+    <GraphDistance let:svgEl {svgEl} let:active {active} slot="visualization" />
   </Section>
 </div>

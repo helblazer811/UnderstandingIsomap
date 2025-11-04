@@ -16,21 +16,21 @@
     convertObjectDataFormatToArray,
   } from "$lib/utils/math.js";
 
+  export let active = false;
+  export let svgEl; // reference to the <svg> element
   export let dataset;
   export let width = 500;
   export let height = 500;
   export let radius = 5;
   export let margin = 40;
-  export let active = false;
   export let pointOpacity = 0.8;
   export let colorScheme = d3.interpolateViridis;
-  export let svgEl; // reference to the <svg> element
 
   let pcaResult = null;
   let pcaProjections = null;
   let showEigenvectors = true;
-  let playAnimation = true;
   let animatingProjection = false;
+  let remainingCircleRotations = null;
 
   // Animation timing controls (in ms) as a single object
   export let projectionAnimation = {
@@ -158,6 +158,12 @@
   }
 
   async function animateProjection(svg, dataset) {
+    if (!animatingProjection) {
+      animatingProjection = true;
+    } else {
+      return; // Prevent overlapping animations
+    }
+    console.log("Starting projection animation");
     // Remove previous layers
     svg.selectAll(".eigenvector-projection-group").remove();
     svg.selectAll(".pc-arrows").remove();
@@ -165,7 +171,7 @@
     svg.selectAll("g.intrinsic-dimension-axis").remove();
     // Revert back to original scatter before animating
     plotScatter(svg, dataset);
-    // Compute PCA
+    // Find the first principal component
     const firstPrincipalComponent = pcaResult.components[0];
     const pc1Norm = math.divide(
       firstPrincipalComponent,
@@ -292,6 +298,9 @@
         return (t) => `rotate(${((-angle * 180) / Math.PI) * t},${cx},${cy})`;
       })
 
+    // Set the remaining circle rotations to the number of circles
+    remainingCircleRotations = dataset.data.length;
+
     svg
       .selectAll("g.scatter-sub-container circle")
       .transition()
@@ -302,18 +311,13 @@
         return (t) => `rotate(${((-angle * 180) / Math.PI) * t},${cx},${cy})`;
       })
       .on("end", function() {
-        console.log("Circle rotation animation completed!");
         // Allow animation again after a delay
-        setTimeout(() => {
-          animatingProjection = false;
-        }, 1500);
+        if (remainingCircleRotations == 1) {
+            animatingProjection = false;
+        } else {
+            remainingCircleRotations -= 1;
+        }
       });
-  }
-
-  // Optional: re-plot if dataset changes
-  $: if (dataset && svgEl) {
-    const svg = d3.select(svgEl);
-    plotScatter(svg, dataset);
   }
 
   //   $: if (active && svgEl && showIntrinsicDimension) {
@@ -326,16 +330,29 @@
 //     plotEigenvectors(svg, dataset);
 //   }
 
-  $: if (active && svgEl && playAnimation && !animatingProjection && pcaResult != null && pcaProjections != null) {
-    animatingProjection = true;
-    const svg = d3.select(svgEl);
-    animateProjection(svg, dataset);
-  }
+//   $: if (active && svgEl && playAnimation && !animatingProjection && pcaResult != null && pcaProjections != null) {
+//     console.log("Starting projection animation");
+//   }
 
   $: if (dataset) {
-    // Compute PCA and projection up front once dataset is available
+    console.log("Dataset changed, computing PCA");
     pcaResult = computePCA(dataset.data);
     pcaProjections = projectOntoFirstPrincipalComponent(dataset.data);
+  }
+
+  $: if(active) {
+    console.log("Active state changed");
+  }
+
+  $: if (svgEl) {
+    console.log("SVG element is set");
+  }
+
+  // Optional: re-plot if dataset changes
+  $: if (dataset && svgEl && active) {
+    const svg = d3.select(svgEl);
+    plotScatter(svg, dataset);
+    animateProjection(svg, dataset);
   }
 
 </script>
