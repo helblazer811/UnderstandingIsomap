@@ -6,29 +6,11 @@
 }
 
 /* Left column: text */
-.text-column {
+.container {
   top: 0;
   flex: 1;
   width: 100%;
   /* max-width: 500px; */
-}
-
-/* Right column: SVG */
-.svg-column {
-  flex: 1;
-  display: flex;
-  justify-content: center;
-  /* column height matches text automatically */
-}
-
-.svg-column svg {
-  position: sticky;
-  top: 50%;                 /* vertical center relative to viewport */
-  transform: translateY(-50%); /* truly center */
-  max-height: 90vh;          /* optional: don’t exceed viewport */
-  width: auto;
-
-  pointer-events: all;
 }
 
 html, body {

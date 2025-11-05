@@ -12,7 +12,7 @@
   export let radius = 5;
   export let colorScheme = d3.interpolateViridis;
   export let pointOpacity = 0.6;
-  export let svgEl; // reference to the <svg> element
+  let svgEl; // local reference to the <svg> element
 
   /**
    * Animates existing points to their spiral positions.
@@ -262,13 +262,22 @@
     console.log("Animating intrinsic dimension axis...");
   }
 
+  $: if (dataset && svgEl) {
+    const svg = d3.select(svgEl);
+    plotScatter(svg, dataset);
+  }
+
   $: if (active && dataset && svgEl) {
     const svg = d3.select(svgEl);
-    svg.selectAll("circle").remove();
-
-    // Plot the scatter plot
-    plotScatter(svg, dataset);
     // animateScatterToSpiral(points, dataset, 2000);
     animateIntrinsicDimensionAxis(svg, dataset, 3000);
   }
+
 </script>
+
+<svg
+  bind:this={svgEl}
+  {width}
+  {height}
+  style:opacity={active ? 1 : settings.inactiveOpacity}
+></svg>

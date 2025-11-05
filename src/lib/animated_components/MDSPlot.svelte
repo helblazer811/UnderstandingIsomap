@@ -17,7 +17,7 @@
   } from "$lib/utils/math.js";
 
   export let active = false;
-  export let svgEl; // reference to the <svg> element
+  let svgEl; // local reference to the <svg> element
   export let dataset;
   export let width = 500;
   export let height = 500;
@@ -335,24 +335,27 @@
 //   }
 
   $: if (dataset) {
-    console.log("Dataset changed, computing PCA");
     pcaResult = computePCA(dataset.data);
     pcaProjections = projectOntoFirstPrincipalComponent(dataset.data);
   }
 
-  $: if(active) {
-    console.log("Active state changed");
-  }
-
-  $: if (svgEl) {
-    console.log("SVG element is set");
+  $: if (dataset && svgEl) {
+    const svg = d3.select(svgEl);
+    plotScatter(svg, dataset);
   }
 
   // Optional: re-plot if dataset changes
   $: if (dataset && svgEl && active) {
     const svg = d3.select(svgEl);
-    plotScatter(svg, dataset);
     animateProjection(svg, dataset);
   }
 
+  
 </script>
+
+<svg
+  bind:this={svgEl}
+  {width}
+  {height}
+  style:opacity={active ? 1 : settings.inactiveOpacity}
+></svg>

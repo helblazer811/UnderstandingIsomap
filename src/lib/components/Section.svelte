@@ -1,11 +1,6 @@
 <script>
-  import * as settings from "$lib/settings.js";
-
-  export let width = 500;
-  export let height = 300;
-
-  let svgEl; // reference to the <svg> element
   let active = false;
+  // Section now only manages the hover-active state and layout; width/height are owned by child visualizations.
 </script>
 
 <div
@@ -19,13 +14,7 @@
     <slot name="text"></slot>
   </div>
   <div class="plot">
-    <svg
-      bind:this={svgEl}
-      {width}
-      {height}
-      style:opacity={active ? 1 : settings.inactiveOpacity}
-    ></svg>
-    <slot name="visualization" {svgEl} {active} width={width} height={height}></slot>
+    <slot name="visualization" {active}></slot>
   </div>
 </div>
 
@@ -52,10 +41,5 @@
     display: flex;
     justify-content: center; /* horizontal center */
     align-items: center; /* vertical center */
-  }
-
-  .text-plot-container .plot svg {
-    /* width: 100%; */
-    /* height: auto; */
   }
 </style>

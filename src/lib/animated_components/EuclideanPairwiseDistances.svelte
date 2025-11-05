@@ -4,7 +4,7 @@
   import { onMount } from "svelte";
   import { generateNoisySineWave } from "$lib/utils/data.js";
 
-  export let svgEl;
+  let svgEl;
   export let width = 500;
   export let height = 300;
   export let margin = 40;
@@ -19,8 +19,7 @@
   export let animationSpeed = 50;
   export let pauseBetweenTraversals = 1000;
 
-  let showScatterPlot = false;
-  let animateDistances = false;
+  let currentAnimationId = 0;
   let animationInProgress = false;
   let dataset = null;
   let highlightedIdx = null;
@@ -70,8 +69,8 @@
         const idx = dataArr.indexOf(d);
         if (idx !== -1 && idx !== highlightedIdx) {
           //   tempHighlightedIdx = idx;
-          highlightedIdx = idx;
-          animateDistances = true;
+          currentAnimationId += 1;
+          highlightedIdx = idx; // This will trigger the animation
         }
       });
   }
@@ -84,9 +83,10 @@
     yScale,
     startIdx
   ) {
-    if (!animateDistances) return;
+    if (animationInProgress) return;
+    if (!active) return;
+    const animationId = ++currentAnimationId;
     animationInProgress = true;
-    animateDistances = false;
     console.log("Starting pairwise distances animation");
 
     const dataArr = dataset.data;
@@ -110,6 +110,10 @@
     // Animate drawing lines to each other point sequentially
     for (let i = 0; i < dataArr.length; i++) {
       if (i === startIdx) continue;
+      if (animationId !== currentAnimationId) {
+        // A new animation has started, abort this one
+        return;
+      }
 
       const endPoint = dataArr[i];
 
@@ -126,42 +130,35 @@
 
       // Animate the line extending to the end point
       await new Promise((resolve) => {
-        if (animationInProgress) {
-          line
-            .transition()
-            .duration(animationSpeed)
-            .attr("x2", xScale(endPoint.x))
-            .attr("y2", yScale(endPoint.y))
-            .on("end", resolve);
-        }
+        line
+          .transition()
+          .duration(animationSpeed)
+          .attr("x2", xScale(endPoint.x))
+          .attr("y2", yScale(endPoint.y))
+          .on("end", resolve);
       });
 
       // Pause briefly before next line
       await new Promise((resolve) => {
-        if (animationInProgress) {
-          setTimeout(resolve, pauseBetweenTraversals / 10);
-        }
+        setTimeout(resolve, pauseBetweenTraversals / 10);
       });
     }
 
     // Animation complete, wait cooldown then start with new random point
-    setTimeout(() => {
-      if (!animateDistances && animationInProgress) {
-        animationInProgress = false;
-        svg.selectAll("g.animation-lines-group").remove();
-        highlightedIdx = Math.floor(Math.random() * dataset.data.length);
-        animateDistances = true;
-      }
-    }, pauseBetweenTraversals);
+    await new Promise((resolve) => {
+      setTimeout(resolve, pauseBetweenTraversals);
+    });
+
+    animationInProgress = false;
+    svg.selectAll("g.animation-lines-group").remove();
+    highlightedIdx = Math.floor(Math.random() * dataset.data.length);
   }
 
-  $: if (dataset && svgEl && showScatterPlot) {
+  $: if (highlightedIdx !== null && active) {
+    // If active or highlightedIdx changes, start animation
     const svg = d3.select(svgEl);
-    plotScatter(svg, dataset, xScale, yScale, radius, []);
-  }
-
-  $: if (dataset && svgEl && highlightedIdx !== null && active) {
-    const svg = d3.select(svgEl);
+    animationInProgress = false;
+    currentAnimationId += 1;
     animatingPairwiseDistances(svg, dataset, xScale, yScale, highlightedIdx);
   }
 
@@ -169,7 +166,7 @@
     // Generate sine wave dataset
     dataset = generateNoisySineWave(numPoints, noiseLevel, 20, 1, [
       0,
-      2 * Math.PI,
+      4 * Math.PI,
     ]);
 
     // Compute scales
@@ -177,11 +174,18 @@
     xScale = scales.xScale;
     yScale = scales.yScale;
 
-    // Show scatter plot by default
-    showScatterPlot = true;
-    animateDistances = true;
-
     // Select a random node for highlightedIdx
     highlightedIdx = Math.floor(Math.random() * dataset.data.length);
+
+    const svg = d3.select(svgEl);
+    plotScatter(svg, dataset, xScale, yScale, radius, []);
   });
+  
 </script>
+
+<svg
+  bind:this={svgEl}
+  {width}
+  {height}
+  style:opacity={active ? 1 : settings.inactiveOpacity}
+></svg>

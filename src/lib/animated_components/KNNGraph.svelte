@@ -6,22 +6,21 @@
   import { computeDataScales } from "$lib/utils/data.js";
   import { onMount } from "svelte";
 
+  let svgEl; // local reference to the <svg> element
   export let k;
-  export let svgEl; // reference to the <svg> element
   export let width = 500;
   export let height = 300;
   export let margin = 40;
   export let radius = 6;
   export let active = true;
   export let colorScheme = d3.interpolateViridis;
-  export let numPoints = 80;
+  export let numPoints = 180;
   export let noiseLevel = 0.1;
   export let pointOpacity = 0.6;
   export let edgeOpacity = 0.3;
   export let edgeWidth = 1.5;
   // export let pointColor = "#1976d2";
   export let graphColor = "#1976d2";
-
   let dataset = null;
   // let highlightedIdx = null;
   // let tempHighlightedIdx = null;
@@ -112,17 +111,19 @@
 
   onMount(() => {
     // Generate sine wave dataset
-    dataset = generateNoisySineWave(
-      numPoints,
-      noiseLevel,
-      85,
-      settings.squashFactor,
-      [0, 20]
-    );
+    dataset = generateNoisySineWave(numPoints, 0.01, 10, 1.5, [0, 15], 4);
 
     // Compute scales for the dataset
     const scales = computeDataScales(dataset, width, height, margin);
     xScale = scales.xScale;
     yScale = scales.yScale;
   });
+  
 </script>
+
+<svg
+  bind:this={svgEl}
+  {width}
+  {height}
+  style:opacity={active ? 1 : settings.inactiveOpacity}
+></svg>

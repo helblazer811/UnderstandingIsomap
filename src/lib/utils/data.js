@@ -91,9 +91,10 @@ export function generateNoiseFreeSpiralPoints(
  * Generates a noisy sine wave dataset with optional rotation
  * @param {number} numPoints - Number of points to generate
  * @param {number} noiseVariance - Variance of Gaussian noise to add
- * @param {number} squashFactor - Controls the frequency of the sine wave
- * @param {Array<number>} xRange - [min, max] range for x values
  * @param {number} rotationAngle - Rotation angle in degrees (default: 110)
+ * @param {number} squashFactor - Controls the frequency of the sine wave (default: 1)
+ * @param {Array<number>} xRange - [min, max] range for x values (default: [0, 10])
+ * @param {number} amplitude - Amplitude of the sine wave (default: 1)
  * @returns {{data: Array<{x:number,y:number}>, t: Array<number>}}
  */
 export function generateNoisySineWave(
@@ -101,7 +102,8 @@ export function generateNoisySineWave(
   noiseVariance,
   rotationAngle = 110,
   squashFactor = 1,
-  xRange = [0, 10]
+  xRange = [0, 10],
+  amplitude = 4
 ) {
   const data = [];
   const tArr = [];
@@ -116,7 +118,7 @@ export function generateNoisySineWave(
     const t = i / (numPoints - 1);
     // x goes from xMin to xMax, y is sine with frequency controlled by squashFactor
     let x = xMin + t * (xMax - xMin);
-    let y = Math.sin(x * squashFactor) * 4;
+    let y = Math.sin(x * squashFactor) * amplitude;
     // Add Gaussian noise
     x += noiseStd * gaussianRandom();
     y += noiseStd * gaussianRandom();

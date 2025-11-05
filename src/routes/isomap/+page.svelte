@@ -1,4 +1,5 @@
 <script>
+  //@ts-nocheck
   import "$lib/styles/styles.css";
   import { onMount } from "svelte";
 
@@ -19,6 +20,7 @@
   import { generateNoisySpiral } from "$lib/utils/data.js";
   import Section from "$lib/components/Section.svelte";
   import Minimizable from "$lib/components/Minimizable.svelte";
+  import EpsilonBall from "$lib/animated_components/EpsilonBall.svelte";
   //   import { ScatterPlot } from "$lib/components/ScatterPlot.js";
   //   import { animateScatterToSpiral } from "$lib/animated_components/createScatter.jscatter.js";
   //   import { plotIntrinsicDimensionAxis } from "$lib/animated_components/intrinsicDimensionAxis.jsonAxis.js";
@@ -47,10 +49,9 @@
   });
 </script>
 
-<!-- Left column: text -->
-<div class="text-column">
+<div class="container">
   <!-- All your headings, paragraphs, ActionLinks, etc. go here -->
-  <Section height={500} width={500}>
+  <Section>
     <div slot="text">
       <div class="article-header">
         <h1 class="hed">Dimensionality Reduction with Isomap</h1>
@@ -65,11 +66,13 @@
         Geoffrey Hinton
       </Quote>
       <p>
-        In many domains, like computational imaging or genomics, data comes in
-        the form of high-dimensional signals that are challenging for humans to
-        directly reason about, as our intuition is generally confined to two or
-        three dimensions. The field of <a href="">dimensionality reduction</a> aims
-        to compress high-dimensional data into lower-dimensional representations
+        In many domains, ranging from computational imaging to finance and
+        genomics, data comes in the form of high-dimensional signals that are
+        challenging for humans to directly reason about, as our intuition is
+        generally confined to two or three dimensions. The field of
+        <!-- svelte-ignore a11y-invalid-attribute -->
+        <a href="">dimensionality reduction</a>
+        aims to compress high-dimensional data into lower-dimensional representations
         that preserve their relevant structure while being much easier for people
         to interpret.
       </p>
@@ -85,22 +88,34 @@
         >
       </p>
       <p>
-        In this article, I'll be exploring <a href="">Isomap</a>, a classic
-        non-linear dimensionality reduction technique that seeks to create a low
-        dimensional embedding of data that preserves its local similarity
-        structure. Isomap builds upon the manifold hypothesis, which posits that
-        data often lies on a low-dimensional manifold, despite existing in a
-        higher dimensional space. This is a classic assumption that is central
-        to many modern dimensionality reduction techniques like
-        <a href="">t-SNE</a> and <a href="">UMAP</a>.
+        In this article, I'll be exploring
+        <!-- svelte-ignore a11y-invalid-attribute -->
+        <a href="">Isomap</a>, a classic non-linear dimensionality reduction
+        technique that seeks to create a low dimensional embedding of data that
+        preserves its local similarity structure. Isomap builds upon the
+        manifold hypothesis, which posits that data often lies on a
+        low-dimensional manifold, despite existing in a higher dimensional
+        space. This is a classic assumption that is central to many modern
+        dimensionality reduction techniques like
+        <!-- svelte-ignore a11y-invalid-attribute -->
+        <a href="">t-SNE</a> and <!-- svelte-ignore a11y-invalid-attribute -->
+        <a href="">UMAP</a>.
       </p>
     </div>
-    <IntroScatter {dataset} let:active {active} let:svgEl {svgEl} slot="visualization" />
+    <IntroScatter
+      {dataset}
+      let:active
+      {active}
+      width={500}
+      height={500}
+      slot="visualization"
+    />
   </Section>
-  <Section height={500} width={500}>
+  <Section>
     <div slot="text">
       <h2>Multidimensional Scaling</h2>
       <p>
+        <!-- svelte-ignore a11y-invalid-attribute -->
         <a href="">Multidimensional Scaling (MDS)</a> is a classical
         dimensionality reduction technique that aims to take some
         high-dimensional data <Katex
@@ -150,6 +165,13 @@
         <Katex math={"V_p"} /> contains the top <Katex math={"p"} /> eigenvectors
         and <Katex math={"\\Lambda_p"} /> contains the top <Katex math={"p"} /> eigenvalues.
       </p>
+      <p>
+        An interesting fact about classical MDS is that when using the Euclidean
+        distance metric, the resulting low-dimensional coordinates are
+        equivalent to those obtained from
+        <!-- svelte-ignore a11y-invalid-attribute -->
+        <a href="">Principal Components Analysis (PCA)</a>.
+      </p>
       <Minimizable
         title="Explanation of Equivalence between Classical MDS and PCA"
       >
@@ -158,6 +180,7 @@
           <p>
             Interestingly, classical MDS with the Euclidean distance metric is
             equivalent to
+            <!-- svelte-ignore a11y-invalid-attribute -->
             <a href="">Principal Components Analysis (PCA)</a>.
           </p>
           <h3>Definition of PCA</h3>
@@ -165,7 +188,7 @@
             PCA seeks to find a low-dimensional representation of data that
             maximizes the variance along each dimension. This is done by
             computing the covariance matrix
-            <Katex math={"C = \\frac{1}{n} X^T X"} displayMode={true}/>
+            <Katex math={"C = \\frac{1}{n} X^T X"} displayMode={true} />
             of the centered data <Katex
               math={"X \\in \\mathbb{R}^{n \\times d}"}
             />
@@ -184,6 +207,53 @@
             The equivalence between these two formulations can be seen using the
             SVD of <Katex math={"X"} />
             <Katex math={"X = U \\Sigma V^T."} displayMode={true} />
+            For PCA, we established that the projections onto the principal components
+            are given by
+            <Katex math={"Y = X V_p"} />
+            If we expand this using the SVD of <Katex math={"X"} />, we have
+            <Katex
+              math={"Y = (U \\Sigma V^T) V_p = U_p \\Sigma_p."}
+              displayMode={true}
+            />
+          </p>
+          <p>
+            For MDS, we perform an eigen decomposition to our double centered
+            Gram matrix
+            <Katex math={"B = -\\frac{1}{2} H D^2 H."} displayMode={true} />
+            For the special case when <Katex math={"D"} /> is the Euclidean distance
+            matrix, and we assume that our data is already centered (i.e. <Katex
+              math={"HX = X"}
+            />), we have that <Katex
+              math={"B \\propto X X^T."}
+              displayMode={true}
+            />
+            If we take the SVD of <Katex math={"B = X X^T"} />, we have
+            <Katex
+              math={"X X^T = (U \\Sigma V^T)(U \\Sigma V^T)^T = U \\Sigma^2 U^T."}
+              displayMode={true}
+            />
+            Because <Katex math={"X X^T"} /> is symmetric and positive semi-definite,
+            its eigen decomposition is unique up to the signs and rotation, thus
+            we have that the eigenvectors are given by <Katex math={"U"} /> and the
+            eigenvalues are given by <Katex math={"\\Lambda = \\Sigma^2"} />.
+            For MDS we compute the low-dimensional coordinates using the
+            eigenvectors of <Katex math={"B"} /> giving us
+            <Katex
+              math={"Y = U_p \\Lambda_p^{1/2} = U_p \\Sigma_p"}
+              displayMode={true}
+            />
+          </p>
+
+          <!-- 
+            For MDS we compute the low-dimensional coordinates using the eigenvectors of <Katex
+              math={"B"} /> giving us
+            <Katex
+              math={"Y = U_p \\Lambda_p^{1/2} = U_p \\Sigma_p"}
+              displayMode={true}/>
+
+
+
+
             The covariance matrix <Katex math={"X^T X"} /> of centered data <Katex
               math={"X"}
             /> can be written as
@@ -229,47 +299,65 @@
             Thus we see that both PCA coordinates and MDS coordinates are
             identical when using the Euclidean distance metric (up to scaling
             and rotation).
-            <!-- It is in fact the case that the projections obtained from PCA are the same (up to scaling and rotation) as those obtained from classical MDS with the Euclidean distance metric. -->
+            It is in fact the case that the projections obtained from PCA are the same (up to scaling and rotation) as those obtained from classical MDS with the Euclidean distance metric. 
           </p>
+         -->
         </div>
       </Minimizable>
     </div>
     <MDSPlot
       {dataset}
-      let:svgEl
-      {svgEl}
       let:active
       {active}
+      width={500}
+      height={500}
       slot="visualization"
     />
   </Section>
   <!-- <MDSPlot {dataset} /> -->
   <!-- <PCAScatter {dataset} /> -->
-  <Section width={500} height={300}>
+  <Section>
     <div slot="text">
       <h2>Limitations of MDS with Euclidean Distance</h2>
       <p>
-        We can project the data onto the first principal component to get a
-        one-dimensional representation of our data. But we can see that, despite
-        the fact that our spiral dataset has a single intrinsic dimension, PCA
-        fails to capture this structure. This is because Euclidean distance is a
-        poor (global) measure of similarity between the points in our dataset.
+        We can see that with the choice of Euclidean distance as our metric for
+        <Katex math={"d_{ij}"} />, MDS amounts to projecting out data onto the
+        first
+        <Katex math={"k"} /> principal components. While this is a powerful technique
+        for many types of data, for our spiral dataset it fails to capture the intrinsic
+        structure of the data because it is restricted to linear axes in the original
+        space.
+      </p>
+      <p>
+        A central assumption that Isomap and many other non-linear
+        dimensionality reduction techniques takes advantage of is that <b>
+          while Euclidean distance may not be a good global measure of
+          similarity for data with manifold structure, it works fairly well
+          locally.
+        </b>
+        That is, while Euclidean distance may not be a good measure of similarity
+        between points that are far apart, it works reasonably well for points that
+        are close together! This can be seen in the dataset on the right. The closest
+        points to a given point in Euclidean distance are indeed nearby along the
+        spiral, however points that are a medium Euclidean distance away may be very
+        far apart along the spiral.
       </p>
     </div>
-    <EuclideanPairwiseDistances let:svgEl {svgEl} let:active {active} slot="visualization" />
+    <EuclideanPairwiseDistances
+      let:active
+      {active}
+      width={500}
+      height={300}
+      slot="visualization"
+    />
   </Section>
-  <Section height={600} width={500}>
+  <Section>
     <div slot="text">
-      <h2>Capturing the Local Structure of Data</h2>
+      <h2>Epsilon Neighborhoods</h2>
       <p>
-        We've established that a linear method like PCA is a poor choice for
-        uncovering the true structure of our spiral dataset. An interesting
-        observation about this dataset is that, while Euclidean distance may not
-        be a good measure of similarity between points that are far apart, it
-        works reasonably well for points that are close together! One way to see
-        this is to draw a circle around a point (called an epsilon
-        neighborhood). That is the region about a point <Katex math={"x_i"} /> defined
-        as
+        One way to formalize the idea of locality is through neighborhoods. If
+        you draw a circle around a point (called an epsilon neighborhood). That
+        is the region about a point <Katex math={"x_i"} /> defined as
         <Katex
           math={"N_\\epsilon(x_i) = \\{ x_j : ||x_i - x_j||_2 < \\epsilon \\}"}
           displayMode={true}
@@ -278,6 +366,9 @@
         that the points that fall within this circle when <Katex
           math={"\\epsilon"}
         /> is small are also close to the point along the spiral's intrinsic dimension.
+        However, if we increase <Katex math={"\\epsilon"} />, we start to
+        include points that are nearby in Euclidean distance but far apart along
+        the spiral.
       </p>
       <div class="slider-container">
         <label class="slider-main-label">
@@ -296,41 +387,34 @@
           <span class="slider-value-label">5</span>
         </div>
       </div>
+      <h2>Building a Graph from Local Neighborhoods</h2>
+      <Quote>
+        How can we embed data that is locally Euclidean but globally
+        non-Euclidean?
+      </Quote>
       <p>
-        A powerful perspective in many dimensionality reduction techniques is to
-        represent data as a graph, where the connections between points in our
-        dataset capture their local similarity structure. This is central to
-        many more powerful dimensionality reduction techniques like <a href=""
-          >t-SNE</a
-        >
-        and
+        Now that we have established that our data has local Euclidean
+        structure, how can we take advantage of this to build a better
+        dimensionality reduction technique? A powerful perspective in many
+        dimensionality reduction techniques is to represent data as a graph,
+        where the connections between points in our dataset capture their local
+        similarity structure. This is central to many more powerful
+        dimensionality reduction techniques like
+        <!-- svelte-ignore a11y-invalid-attribute -->
+        <a href="">t-SNE</a> and <!-- svelte-ignore a11y-invalid-attribute -->
         <a href="">UMAP</a>.
       </p>
       <p>
         One interesting choice for constructing a graph that captures local
         similarity is to use these <Katex math={"\\epsilon"} /> neighborhoods. If
         two points lie within each other's <Katex math={"\\epsilon"} /> neighborhoods,
-        <ActionLink
-          action={() => {
-            showSingleEpsilonBall = false;
-            showAllEpsilonBalls = true;
-            showEpsilonBallGraph = false;
-            animatingAllBalls = true;
-          }}>we can connect them with an edge in the graph.</ActionLink
-        >
-        We can represent this graph with an adjacency matrix <Katex
-          math={"A"}
-        /> where
+        we can connect them with an edge in the graph. We can represent this graph
+        with an adjacency matrix <Katex math={"A"} /> where
         <Katex math={"A_{ij} = 1"} /> if points <Katex math={"i"} /> and <Katex
           math={"j"}
         /> are connected and <Katex math={"A_{ij} = 0"} /> otherwise. Another simple
         choice is to connect each point to its k-nearest neighbors.
       </p>
-    </div>
-    <EpsilonGraph let:svgEl {svgEl} let:active {active} {epsilon} slot="visualization" />
-  </Section>
-  <Section height={500} width={500}>
-    <div slot="text">
       <!-- K slider -->
       <!-- <input type="range" min="1" max="10" step="1" value="5" /> -->
       <div class="slider-container">
@@ -355,9 +439,17 @@
         </p>
       </div>
     </div>
-    <KNNGraph let:svgEl {svgEl} {k} slot="visualization" />
+    <div
+      slot="visualization"
+      let:active
+      style="display: flex; flex-direction: column; align-items: center; justify-content: center;"
+    >
+      <EpsilonBall let:active {active} {epsilon} width={500} height={300} />
+      <EpsilonGraph let:active {active} {epsilon} width={500} height={300} />
+      <KNNGraph let:active {active} {k} width={500} height={300} />
+    </div>
   </Section>
-  <Section height={500} width={500}>
+  <Section>
     <div slot="text">
       <h2>Measuring Distance in a Graph</h2>
       <p>
@@ -377,9 +469,14 @@
         <br />
         <em> Why can't we just use Euclidean distance?</em>
       </p>
-
       <h2>Measuring Geodesic Distances</h2>
     </div>
-    <GraphDistance let:svgEl {svgEl} let:active {active} slot="visualization" />
+    <GraphDistance
+      let:active
+      {active}
+      width={500}
+      height={500}
+      slot="visualization"
+    />
   </Section>
 </div>

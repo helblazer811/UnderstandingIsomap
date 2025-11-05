@@ -8,7 +8,7 @@
     dijkstraShortestPath,
   } from "$lib/utils/math.js";
 
-  export let svgEl; // reference to the <svg> element
+  let svgEl; // local reference to the <svg> element
   export let width = 500;
   export let height = 600;
   export let margin = 40;
@@ -322,4 +322,12 @@
     // Show scatter plot by default
     showScatterPlot = true;
   });
+  
 </script>
+
+<svg
+  bind:this={svgEl}
+  {width}
+  {height}
+  style:opacity={active ? 1 : settings.inactiveOpacity}
+></svg>
