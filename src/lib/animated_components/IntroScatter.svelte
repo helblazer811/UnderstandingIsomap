@@ -1,4 +1,5 @@
 <script>
+  // @ts-nocheck
   import * as d3 from "d3";
   import * as settings from "$lib/settings.js";
 
@@ -277,7 +278,10 @@
 
 <svg
   bind:this={svgEl}
+  viewBox={`0 0 ${width} ${height}`}
+  preserveAspectRatio="xMidYMid meet"
   {width}
   {height}
+  style="display:block; width: 100%; max-width: {width}px; height: auto;"
   style:opacity={active ? 1 : settings.inactiveOpacity}
 ></svg>

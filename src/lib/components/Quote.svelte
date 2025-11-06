@@ -3,7 +3,7 @@
 <style>
 
 .quote {
-  width: 500px;
+  width: 100%;
   display: block;
   font-style: italic;
   left: 0;

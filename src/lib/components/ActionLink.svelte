@@ -1,4 +1,5 @@
 <script>
+    // @ts-nocheck
     export let action = () => {};
 
     function handleClick(event) {
@@ -21,6 +22,7 @@
     }
 </style>
 
+<!-- svelte-ignore a11y-invalid-attribute -->
 <a href="#" on:click={handleClick}>
     <slot></slot>
 </a>

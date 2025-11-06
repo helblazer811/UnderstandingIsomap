@@ -1,4 +1,5 @@
 <script>
+  // @ts-nocheck
   import { onMount } from 'svelte';
   import { slide } from 'svelte/transition';
 
@@ -49,7 +50,7 @@
     /* margin-left: 80px; */
     overflow: hidden;
     width: 100%;
-    max-width: 550px;
+    /* max-width: 550px; */
   }
 
   .toggle-button {

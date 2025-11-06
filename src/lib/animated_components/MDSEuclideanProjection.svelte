@@ -355,7 +355,9 @@
 
 <svg
   bind:this={svgEl}
+  viewBox={`0 0 ${width} ${height}`}
+  preserveAspectRatio="xMidYMid meet"
   {width}
   {height}
-  style:opacity={active ? 1 : settings.inactiveOpacity}
+  style="display:block; width: 100%; max-width: {width}px; height: auto; opacity: {active ? 1 : settings.inactiveOpacity}"
 ></svg>

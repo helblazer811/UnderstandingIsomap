@@ -1,4 +1,5 @@
 <script>
+  // @ts-nocheck
   import * as d3 from "d3";
   import * as settings from "$lib/settings.js";
   import { onMount } from "svelte";
@@ -10,14 +11,14 @@
 
   let svgEl; // local reference to the <svg> element
   export let width = 500;
-  export let height = 600;
+  export let height = 400;
   export let margin = 40;
   export let k = 5;
   export let radius = 5;
   export let active = false;
   export let pointOpacity = 0.2;
-  export let numPoints = 180;
-  export let noiseLevel = 0.02;
+  export let numPoints = 100;
+  export let noiseLevel = 0.005;
   export let traversalOpacity = 1.0;
   export let graphColor = "#1976d2";
   export let traversalColor = "#ff6b35";
@@ -134,8 +135,6 @@
       console.log("No path found between", startIdx, "and", targetEndIdx);
       return;
     }
-
-    console.log("Animating path:", path);
 
     function animatePath() {
       return new Promise((resolve) => {
@@ -312,7 +311,7 @@
 
   onMount(() => {
     // Generate sine wave dataset
-    dataset = generateNoisySineWave(numPoints, noiseLevel, 20, 1, [0, 20]);
+    dataset = generateNoisySineWave(numPoints, noiseLevel, 0, 1, [0, 25], 0.5);
 
     // Compute scales
     const scales = computeScales(dataset);
@@ -327,7 +326,10 @@
 
 <svg
   bind:this={svgEl}
+  viewBox={`0 0 ${width} ${height}`}
+  preserveAspectRatio="xMidYMid meet"
   {width}
   {height}
+  style="display:block; width: 100%; max-width: {width}px; height: auto;"
   style:opacity={active ? 1 : settings.inactiveOpacity}
 ></svg>

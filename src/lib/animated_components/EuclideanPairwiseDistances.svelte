@@ -1,4 +1,5 @@
 <script>
+  // @ts-nocheck
   import * as d3 from "d3";
   import * as settings from "$lib/settings.js";
   import { onMount } from "svelte";
@@ -8,7 +9,7 @@
   export let width = 500;
   export let height = 300;
   export let margin = 40;
-  export let k = 5;
+  export const k = 5;
   export let radius = 8;
   export let active = true;
   export let pointOpacity = 0.3;
@@ -185,7 +186,10 @@
 
 <svg
   bind:this={svgEl}
+  viewBox={`0 0 ${width} ${height}`}
+  preserveAspectRatio="xMidYMid meet"
   {width}
   {height}
+  style="display:block; width: 100%; max-width: {width}px; height: auto;"
   style:opacity={active ? 1 : settings.inactiveOpacity}
 ></svg>

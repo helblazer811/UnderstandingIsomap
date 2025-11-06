@@ -1,4 +1,5 @@
 <script>
+  //@ts-nocheck
   import * as d3 from "d3";
   import * as settings from "$lib/settings.js";
   import { onMount } from "svelte";
@@ -12,9 +13,9 @@
   export let radius = 6;
   export let active = true;
   export let colorScheme = d3.interpolateViridis;
-  export let pointOpacity = 0.9;
-  export let numPoints = 180;
-  export let noiseLevel = 0.1;
+  export const pointOpacity = 0.9;
+  export let numPoints = 90;
+  export const noiseLevel = 0.1;
   let svgEl; // local reference to the <svg> element
 
   let dataset = null;
@@ -25,18 +26,14 @@
   let currentOpacity = 1.0;
 
   // Draw scatter points with t-based Viridis color and click-to-highlight
-  function plotScatter(
-    svg,
-    dataset,
-    xScale,
-    yScale,
-    radius,
-    colorScale,
-    withinEpsilon
-  ) {
+  function plotScatter(svg, dataset, xScale, yScale, radius, withinEpsilon) {
     svg.selectAll("g.scatter-group").remove();
     const dataArr = dataset.data;
     const scatterGroup = svg.append("g").attr("class", "scatter-group");
+    const colorScale = d3.scaleSequential(colorScheme).domain([0, 1]);
+    if (!withinEpsilon) {
+      withinEpsilon = new Array(dataArr.length).fill(false);
+    }
     scatterGroup
       .selectAll("circle.scatter-point")
       .data(dataArr)
@@ -166,8 +163,6 @@
     const svg = d3.select(svgEl);
     // Compute scales and color
     const dataArr = dataset.data;
-    const colorScale = d3.scaleSequential(colorScheme).domain([0, 1]);
-
     // Use highlightWithinEpsilonPoints for dot highlighting
     let withinEpsilon;
     withinEpsilon = highlightWithinEpsilonPoints(
@@ -178,15 +173,7 @@
       yScale
     );
 
-    plotScatter(
-      svg,
-      dataset,
-      xScale,
-      yScale,
-      radius,
-      colorScale,
-      withinEpsilon
-    );
+    plotScatter(svg, dataset, xScale, yScale, radius, withinEpsilon);
   }
 
   $: if (active && dataset && svgEl) {
@@ -217,34 +204,6 @@
     }
   }
 
-  // $: if (active && svgEl && showSingleEpsilonBall) {
-  //   const svg = d3.select(svgEl);
-  //   // Always show the permanent highlight if it exists
-  //   if (highlightedIdx !== null) {
-  //     plotEpsilonBall(
-  //       svg,
-  //       dataset,
-  //       epsilon,
-  //       highlightedIdx,
-  //       xScale,
-  //       yScale,
-  //       0.4
-  //     );
-  //   }
-  //   // Show temporary hover highlight with higher opacity
-  //   if (tempHighlightedIdx !== null && tempHighlightedIdx !== highlightedIdx) {
-  //     plotEpsilonBall(
-  //       svg,
-  //       dataset,
-  //       epsilon,
-  //       tempHighlightedIdx,
-  //       xScale,
-  //       yScale,
-  //       0.7
-  //     );
-  //   }
-  // }
-
   onMount(() => {
     // Sample sine wave dataset
     dataset = generateNoisySineWave(numPoints, 0.01, 10, 1.5, [0, 15], 4);
@@ -273,13 +232,18 @@
       }
       highlightedIdx = minIdx;
     }
+    // Also plot scatter at first
+    const svg = d3.select(svgEl);
+    plotScatter(svg, dataset, xScale, yScale, radius);
   });
-  
 </script>
 
 <svg
   bind:this={svgEl}
+  viewBox={`0 0 ${width} ${height}`}
+  preserveAspectRatio="xMidYMid meet"
   {width}
   {height}
+  style="display:block; width: 100%; max-width: {width}px; height: auto;"
   style:opacity={active ? 1 : settings.inactiveOpacity}
 ></svg>

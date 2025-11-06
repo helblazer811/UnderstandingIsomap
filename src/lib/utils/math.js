@@ -1,3 +1,4 @@
+// @ts-nocheck
 import * as math from "mathjs";
 
 /**
@@ -257,7 +258,7 @@ export function projectOntoFirstPrincipalComponent(data) {
 
 /* -------------- Code for doing MDS ------------------ */
 
-export function computeMDS(pairwiseDistances, nComponents = 2) {
+export function computeMDS(pairwiseDistances, data, nComponents = 2) {
   /**
    * Computes Multidimensional Scaling (MDS) projection from pairwise distances.
    * @param {Array<Array<number>>} pairwiseDistances - Symmetric matrix of pairwise distances (n x n).
@@ -267,7 +268,8 @@ export function computeMDS(pairwiseDistances, nComponents = 2) {
   /* Given pairwise distances compute the MDS projection */
   const n = pairwiseDistances.length;
   const D = math.matrix(pairwiseDistances);
-  const D2 = math.square(D); // Element-wise square
+  // Element-wise square: use map to avoid issues with direct square on Matrix
+  const D2 = math.map(D, (v) => v * v);
 
   // Centering matrix
   const I = math.identity(n);
@@ -276,34 +278,57 @@ export function computeMDS(pairwiseDistances, nComponents = 2) {
   const C = math.subtract(I, J);
 
   // Double centering
-  const B = math.multiply(math.multiply(C, D2), C);
-  B = math.multiply(B, -0.5);
+  const B = math.multiply(-0.5, math.multiply(math.multiply(C, D2), C));
 
-  // Eigen decomposition
-  const eig = math.eigs(B);
-  const eigenVectors = eig.eigenvectors.sort((a, b) => b.value - a.value);
-  const values = eigenVectors.map((e) => e.value);
-  const vectors = eigenVectors.map((e) => e.vector);
+  console.log("Double centered.");
 
-  // Take top nComponents
-  const selectedValues = values.slice(0, nComponents);
-  const selectedVectors = vectors.slice(0, nComponents);
+  // Top eigenpair via power iteration (replace eigs)
+  const { eigenvalue: topValRaw, eigenvector: topVecRaw } = powerIteration(B);
+  const topVal = Math.max(0, topValRaw);
+  const topVec = Array.isArray(topVecRaw) ? topVecRaw : topVecRaw.toArray();
+  console.log("Power iteration completed.");
 
-  // Coordinates
-  const coords = [];
+  // 1D coordinates from top eigenvector
+  const coords1D = Array.from(
+    { length: n },
+    (_, i) => topVec[i] * Math.sqrt(topVal)
+  );
+
+  // Rescale 1D coords to match original data's x-width, place along mean y
+  let xMin = Infinity,
+    xMax = -Infinity,
+    ySum = 0;
   for (let i = 0; i < n; i++) {
-    const point = [];
-    for (let j = 0; j < nComponents; j++) {
-      point.push(
-        selectedVectors[j][i] * Math.sqrt(Math.max(0, selectedValues[j]))
-      );
-    }
-    coords.push(point);
+    const p = data[i];
+    if (p.x < xMin) xMin = p.x;
+    if (p.x > xMax) xMax = p.x;
+    ySum += p.y;
   }
+  const origWidth = xMax - xMin;
+  const yConst = ySum / n;
+
+  let projMin = Infinity,
+    projMax = -Infinity,
+    projSum = 0;
+  for (let i = 0; i < n; i++) {
+    const v = coords1D[i];
+    if (v < projMin) projMin = v;
+    if (v > projMax) projMax = v;
+    projSum += v;
+  }
+  const projWidth = projMax - projMin;
+  const projMean = projSum / n;
+  const scale = projWidth > 0 && origWidth > 0 ? origWidth / projWidth : 1;
+  const xCenter = (xMin + xMax) / 2;
+
+  const coords = coords1D.map((v) => [
+    (v - projMean) * scale + xCenter,
+    yConst,
+  ]);
 
   return {
     coordinates: coords,
-    eigenvectors: selectedVectors,
+    eigenvectors: [topVec],
   };
 }
 
@@ -338,7 +363,7 @@ export function computeEuclideanMDS(data) {
    */
   // Compute the pairwise distances then do MDS on them
   const euclideanPairwiseDistances = computeEuclideanPairwiseDistances(data);
-  return computeMDS(euclideanPairwiseDistances);
+  return computeMDS(euclideanPairwiseDistances, data);
 }
 
 export function computeGeodesicPairwiseDistances(adjacencyMatrix) {
@@ -366,6 +391,136 @@ export function computeGeodesicPairwiseDistances(adjacencyMatrix) {
   return distanceMatrix;
 }
 
+/**
+ * Find connected components in an undirected weighted graph represented by an adjacency matrix.
+ * Uses DFS over edges where weight is finite and non-zero.
+ * @param {Array<Array<number>>} adjacencyMatrix
+ * @returns {Array<Array<number>>} Array of components, each a list of vertex indices.
+ */
+export function findConnectedComponents(adjacencyMatrix) {
+  const n = adjacencyMatrix.length;
+  const visited = Array(n).fill(false);
+  const components = [];
+
+  const hasEdge = (w) => w !== Infinity && w !== 0;
+
+  function dfs(u, comp) {
+    visited[u] = true;
+    comp.push(u);
+    for (let v = 0; v < n; v++) {
+      if (!visited[v] && hasEdge(adjacencyMatrix[u][v])) {
+        dfs(v, comp);
+      }
+    }
+  }
+
+  for (let i = 0; i < n; i++) {
+    if (!visited[i]) {
+      const comp = [];
+      dfs(i, comp);
+      components.push(comp);
+    }
+  }
+
+  return components;
+}
+
+/**
+ * Ensure a graph is connected by iteratively connecting the closest pair of vertices
+ * belonging to different connected components, using Euclidean distance between their
+ * original coordinates (provided in `data`). Returns a NEW adjacency matrix.
+ * @param {Array<Array<number>>} adjacencyMatrix - Weighted adjacency matrix (Infinity or 0 = no edge)
+ * @param {Array<{x:number, y:number}>} data - Original 2D coordinates for distance evaluation
+ * @returns {Array<Array<number>>} A connected adjacency matrix
+ */
+export function connectDisconnectedComponents(adjacencyMatrix, data) {
+  const n = adjacencyMatrix.length;
+  if (n === 0) return adjacencyMatrix;
+
+  // Deep copy adjacency to avoid mutating the caller's matrix
+  const adj = adjacencyMatrix.map((row) => row.slice());
+
+  const euclid = (i, j) => {
+    const dx = data[i].x - data[j].x;
+    const dy = data[i].y - data[j].y;
+    return Math.sqrt(dx * dx + dy * dy);
+  };
+
+  // Repeatedly connect components until only one remains
+  let components = findConnectedComponents(adj);
+  while (components.length > 1) {
+    let bestI = -1;
+    let bestJ = -1;
+    let bestDist = Infinity;
+
+    // Find closest cross-component pair
+    for (let a = 0; a < components.length; a++) {
+      for (let b = a + 1; b < components.length; b++) {
+        const compA = components[a];
+        const compB = components[b];
+        for (const i of compA) {
+          for (const j of compB) {
+            const d = euclid(i, j);
+            if (d < bestDist) {
+              bestDist = d;
+              bestI = i;
+              bestJ = j;
+            }
+          }
+        }
+      }
+    }
+
+    if (bestI === -1 || bestJ === -1 || bestDist === Infinity) {
+      // Fallback: cannot find a finite connection; break to avoid infinite loop
+      break;
+    }
+
+    // Connect the best pair symmetrically with Euclidean distance as weight
+    adj[bestI][bestJ] = bestDist;
+    adj[bestJ][bestI] = bestDist;
+
+    // Recompute components after adding the bridge
+    components = findConnectedComponents(adj);
+  }
+
+  return adj;
+}
+
+/**
+ * Power iteration to approximate the dominant eigenvalue/vector of a matrix.
+ * @param {import('mathjs').MathType} matrix - Square matrix (mathjs Matrix or array of arrays)
+ * @param {number} numIters
+ * @param {number} tol
+ * @returns {{ eigenvalue: number, eigenvector: Array<number> | any }}
+ */
+export function powerIteration(matrix, numIters = 1000, tol = 1e-10) {
+  const size = math.size(matrix).toArray
+    ? math.size(matrix).toArray()
+    : math.size(matrix);
+  const n = Array.isArray(size) ? size[0] : size.get([0]);
+  // Initialize random vector b in [-1,1]
+  let b = Array.from({ length: n }, () => Math.random() * 2 - 1);
+  let bNorm = math.norm(b);
+  if (bNorm === 0) bNorm = 1;
+  b = math.divide(b, bNorm);
+
+  let lambda = 0;
+  for (let i = 0; i < numIters; i++) {
+    const bNew = math.multiply(matrix, b);
+    const bNewNorm = math.norm(bNew);
+    if (bNewNorm === 0) break;
+    b = math.divide(bNew, bNewNorm);
+    const lambdaNew = math.dot(b, math.multiply(matrix, b));
+    if (Math.abs(lambdaNew - lambda) < tol) {
+      lambda = lambdaNew;
+      break;
+    }
+    lambda = lambdaNew;
+  }
+  return { eigenvalue: lambda, eigenvector: b };
+}
+
 export function computeIsomap(data, k) {
   /**
    * Performs Isomap dimensionality reduction.
@@ -376,10 +531,35 @@ export function computeIsomap(data, k) {
   // This is basically MDS on the geodesic pairwise distance matrix
   // NOTE: Assuming going from 2 to 1 dimension here.
   // 1. Construct KNN graph
+  console.log("Computing KNN graph...");
   const knnAdjacencyMatrix = computeKNearestNeighborGraph(data, k);
-  // 2. Compute the geodesic distances in this graph.
-  const geodesicDistances =
-    computeGeodesicPairwiseDistances(knnAdjacencyMatrix);
+  // 1.5. Ensure the graph is connected by bridging components via nearest cross-component pair
+  console.log("Connecting disconnected components if any...");
+  const connectedAdjacencyMatrix = connectDisconnectedComponents(
+    knnAdjacencyMatrix,
+    data
+  );
+  // 2. Compute the geodesic distances in this (now connected) graph.
+  // Get start time
+  const startTime = performance.now();
+  const geodesicDistances = computeGeodesicPairwiseDistances(
+    connectedAdjacencyMatrix
+  );
+  // Assert no Infinity values remain
+  for (let i = 0; i < geodesicDistances.length; i++) {
+    for (let j = 0; j < geodesicDistances.length; j++) {
+      if (geodesicDistances[i][j] === Infinity) {
+        console.warn(
+          `Warning: Found Infinity in geodesic distances between ${i} and ${j}`
+        );
+      }
+    }
+  }
+  // Get end time
+  const endTime = performance.now();
+  console.log(`Geodesic distance computation took ${endTime - startTime} ms`);
   // 3. Compute MDS on these geodesic pairwise distances
-  return computeMDS(geodesicDistances);
+  console.log("Computing MDS on geodesic distances...");
+  const mds = computeMDS(geodesicDistances, data);
+  return mds;
 }

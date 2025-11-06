@@ -13,7 +13,7 @@
   export let active = true;
   export let colorScheme = d3.interpolateViridis;
   export let epsilon = 1;
-  export let numPoints = 180;
+  export let numPoints = 90;
   export let graphShowDuration = 2000;
   export let pointOpacity = 0.6;
   export let growDuration = 2000; // ms to grow epsilon from 0 to maxEpsilon
@@ -154,14 +154,10 @@
     }
   }
 
-  // // -------------------------------
-  // // Reactive rendering
-  // // -------------------------------
-  // $: if (dataset && animatedEpsilonRadius) {
-  //   const svg = d3.select(svgEl);
-  //   console.log("Reactive plotAllEpsilonBalls triggered");
-  //   plotAllEpsilonBalls(svg, dataset, animatedEpsilonRadius, currentOpacity);
-  // }
+  // -------------------------------
+  // Reactive rendering
+  // -------------------------------
+  
 
   // Plot scatter initially
   $: if (dataset && active) {
@@ -176,12 +172,18 @@
     const scales = computeDataScales(dataset, width, height, margin);
     xScale = scales.xScale;
     yScale = scales.yScale;
+    // Also plot satter on mount
+    const svg = d3.select(svgEl);
+    plotScatter(svg, dataset, xScale, yScale);
   });
 </script>
 
 <svg
   bind:this={svgEl}
+  viewBox={`0 0 ${width} ${height}`}
+  preserveAspectRatio="xMidYMid meet"
   {width}
   {height}
+  style="display:block; width: 100%; max-width: {width}px; height: auto;"
   style:opacity={active ? 1 : settings.inactiveOpacity}
 ></svg>

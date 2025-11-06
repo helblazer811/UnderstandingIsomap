@@ -5,6 +5,7 @@
 
   import * as settings from "$lib/settings";
   //   import * as state from "$lib/stores/state.js";
+  import { generateNoisySpiral } from "$lib/utils/data.js";
 
   import ActionLink from "$lib/components/ActionLink.svelte";
   import Quote from "$lib/components/Quote.svelte";
@@ -14,13 +15,12 @@
   import EpsilonGraph from "$lib/animated_components/EpsilonGraph.svelte";
   import GraphDistance from "$lib/animated_components/GraphDistance.svelte";
   import KNNGraph from "$lib/animated_components/KNNGraph.svelte";
-  import MDSPlot from "$lib/animated_components/MDSPlot.svelte";
+  import MDSPlot from "$lib/animated_components/MDSEuclideanProjection.svelte";
   import EuclideanPairwiseDistances from "$lib/animated_components/EuclideanPairwiseDistances.svelte";
-
-  import { generateNoisySpiral } from "$lib/utils/data.js";
   import Section from "$lib/components/Section.svelte";
   import Minimizable from "$lib/components/Minimizable.svelte";
   import EpsilonBall from "$lib/animated_components/EpsilonBall.svelte";
+  import IsomapProjection from "$lib/animated_components/IsomapProjection.svelte";
   //   import { ScatterPlot } from "$lib/components/ScatterPlot.js";
   //   import { animateScatterToSpiral } from "$lib/animated_components/createScatter.jscatter.js";
   //   import { plotIntrinsicDimensionAxis } from "$lib/animated_components/intrinsicDimensionAxis.jsonAxis.js";
@@ -54,8 +54,7 @@
   <Section>
     <div slot="text">
       <div class="article-header">
-        <h1 class="hed">Dimensionality Reduction with Isomap</h1>
-        <!-- <h2 class="dek">Nonlinear Dimensionality Reduction</h2> -->
+        <h1 class="hed">A Visual Introduction to Dimensionality Reduction with Isomap</h1>
         <div class="byline">
           By: <a href="https://alechelbling.com">Alec Helbling</a>
         </div>
@@ -444,9 +443,9 @@
       let:active
       style="display: flex; flex-direction: column; align-items: center; justify-content: center;"
     >
-      <EpsilonBall let:active {active} {epsilon} width={500} height={300} />
-      <EpsilonGraph let:active {active} {epsilon} width={500} height={300} />
-      <KNNGraph let:active {active} {k} width={500} height={300} />
+      <EpsilonBall let:active {active} {epsilon} width={500} height={250} />
+      <EpsilonGraph let:active {active} {epsilon} width={500} height={250} />
+      <KNNGraph let:active {active} {k} width={500} height={250} />
     </div>
   </Section>
   <Section>
@@ -454,24 +453,52 @@
       <h2>Measuring Distance in a Graph</h2>
       <p>
         Now that we have a graph that captures the local similarity structure of
-        our data Many dimensionality reduction techniques capture this local
-        similarity structure in the form of a graph. We can take this <Katex
-          math={"\\epsilon"}
-        /> An interesting way to see this is to draw a circle around a point and
-        note that the closest points We are interested in embedding our data in a
-        way that preserves its local structure. One way to capture the local structure
-        of data is through a nearest neighbor graph. We can define a graph with adjacency
-        matrix
-        <Katex math={"A"} /> where
-        <Katex math={"A_{ij} = 1"} /> if point <Katex math={"i"} /> is among the
-        <Katex math={"k"} /> nearest neighbors of point <Katex math={"j"} /> or vice
-        versa, and <Katex math={"A_{ij} = 0"} /> otherwise.
-        <br />
-        <em> Why can't we just use Euclidean distance?</em>
+        our data, how can we quantify a notion of distance between points? In
+        the case of Isomap, the answer is exceptionally simple, we can just
+        conventional algorithms like Dijkstra's to compute the shortest path
+        between points in the graph as our distance measure. We can use our
+        k-nearest neighbor graph constructed earlier, with edges weighted by
+        Euclidean distance between connected points.
       </p>
-      <h2>Measuring Geodesic Distances</h2>
     </div>
     <GraphDistance
+      let:active
+      {active}
+      width={500}
+      height={300}
+      slot="visualization"
+    />
+  </Section>
+  <Section>
+    <div slot="text">
+      <h2>The Final Isomap Algorithm!</h2>
+      <p>
+        Equipped with a principled method for computing the distances between
+        points that respects the manifold structure of our data, we can now plug
+        these distances into classical MDS to obtain our low-dimensional
+        embedding! The full Isomap algorithm can be summarized in the following
+        steps:
+      </p>
+      <ol>
+        <li>
+          Construct a k-nearest neighbor graph from the data, with edges
+          weighted by Euclidean distance.
+        </li>
+        <li>
+          Compute the shortest path distances between all pairs of points in the
+          graph using Dijkstra's algorithm. This gives us a new distance matrix <Katex
+            math={"D_{graph}"}
+          />.
+        </li>
+        <li>
+          Apply classical MDS to the graph distance matrix <Katex
+            math={"D_{graph}"}
+          /> to obtain low-dimensional coordinates that preserve these distances.
+        </li>
+      </ol>
+    </div>
+    <IsomapProjection
+      {dataset}
       let:active
       {active}
       width={500}

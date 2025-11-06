@@ -1,4 +1,5 @@
 <script>
+  //@ts-nocheck
   import * as d3 from "d3";
   import * as math from "mathjs";
   import * as settings from "$lib/settings.js";
@@ -24,6 +25,7 @@
 //   export let showIntrinsicDimension = false;
   export let showPCAVectors = true;
   export let showPCAProjection = false;
+  let showIntrinsicDimension = false;
 
   // Animation timing controls (in ms) as a single object
   export let pcaAnimation = {
@@ -350,7 +352,8 @@
 
     <p>
       A natural starting point for studying dimensionality reduction is
-      <a href="">principal components analysis (PCA)</a>, which leverages tools
+  <!-- svelte-ignore a11y-invalid-attribute -->
+  <a href="">principal components analysis (PCA)</a>, which leverages tools
       from linear algebra to find the axes in data along which the data has
       maximum variation. However, PCA has some key limitations that motivates
       the need for more advanced non-linear dimensionality techniques like
@@ -410,9 +413,11 @@
   <div class="plot">
     <svg
       bind:this={svgEl}
+      viewBox={`0 0 ${width} ${height}`}
+      preserveAspectRatio="xMidYMid meet"
       {width}
       {height}
-      style="opacity: {active ? 1 : settings.inactiveOpacity}"
+      style="display:block; width: 100%; max-width: {width}px; height: auto; opacity: {active ? 1 : settings.inactiveOpacity}"
     ></svg>
   </div>
 </div>

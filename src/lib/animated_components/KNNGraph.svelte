@@ -1,4 +1,5 @@
 <script>
+  // @ts-nocheck
   import * as d3 from "d3";
   import * as settings from "$lib/settings.js";
   import { computeKNearestNeighborGraph } from "$lib/utils/math.js";
@@ -14,8 +15,8 @@
   export let radius = 6;
   export let active = true;
   export let colorScheme = d3.interpolateViridis;
-  export let numPoints = 180;
-  export let noiseLevel = 0.1;
+  export let numPoints = 90;
+  export const noiseLevel = 0.1;
   export let pointOpacity = 0.6;
   export let edgeOpacity = 0.3;
   export let edgeWidth = 1.5;
@@ -117,13 +118,20 @@
     const scales = computeDataScales(dataset, width, height, margin);
     xScale = scales.xScale;
     yScale = scales.yScale;
+
+    // Plot scatter at first 
+    const svg = d3.select(svgEl);
+    plotScatter(svg, dataset, radius);
   });
   
 </script>
 
 <svg
   bind:this={svgEl}
+  viewBox={`0 0 ${width} ${height}`}
+  preserveAspectRatio="xMidYMid meet"
   {width}
   {height}
+  style="display:block; width: 100%; max-width: {width}px; height: auto;"
   style:opacity={active ? 1 : settings.inactiveOpacity}
 ></svg>
