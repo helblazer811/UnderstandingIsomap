@@ -1,0 +1,120 @@
+.main-container {
+  display: flex;
+  width: 100%;
+  gap: 40px;
+  align-items: flex-start; /* top-align columns */
+}
+
+html, body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+}
+
+/* Left column: text */
+.container {
+  /* top: 0; */
+  flex: 1;
+  width: 100%;
+  /* padding: 0 20px; */
+  /* max-width: 500px; */
+}
+
+
+/* Typography and other styles remain unchanged */
+body {
+  line-height: 1.5;
+  color: #24292e;
+  font-family: -apple-system, system-ui, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+  font-size: 16px;
+  word-wrap: break-word;
+  display: flex;
+  justify-content: center;
+}
+
+h1 { font-size: 1.6em; max-width: 500px; left: 0px}
+h2 { font-size: 1.3em; }
+
+h1.hed, h2.dek {
+  margin-top: 0;
+  border-bottom: none;
+  padding-bottom: 0;
+  margin-bottom: 12px;
+}
+
+.article-header {
+  width: 100%;
+  margin-top: 60px;
+  margin-bottom: 25px;
+}
+
+.byline {
+  font-size: 0.9em;
+  margin-bottom: 16px;
+}
+
+a { color: #0366d6; text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+.viridis-gradient-text {
+  background: linear-gradient(90deg, #440154, #3b528b, #21918c, #5ec962, #afa11a);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  color: transparent;
+  font-weight: bold;
+}
+
+p {
+  display: block;
+  /* width: 550px; */
+  margin-block-start: 1em;
+  margin-block-end: 1em;
+  margin-inline-start: 0px;
+  margin-inline-end: 0px;
+  unicode-bidi: isolate;
+  font-size: 16px;
+  line-height: 1.5;
+  font-family: "Segoe UI", Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+}
+
+/* Match paragraph text styling for ordered lists and list items */
+ol,
+li {
+  font-size: 16px;
+  line-height: 1.5;
+  font-family: "Segoe UI", Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+}
+
+.slider-container {
+    /* width: 550px; */
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin: 1em 0;
+  }
+  .slider-row {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    justify-content: center;
+    gap: 0.5em;
+  }
+  .slider {
+    width: 380px;
+    max-width: 90%;
+    margin-bottom: 0.5em;
+  }
+  .slider-main-label {
+    font-size: 1.1em;
+    font-weight: bold;
+    /* color: #1976d2; */
+    /* margin-bottom: 0.2em; */
+  }
+  .slider-value-label {
+    font-size: 1em;
+    color: #555;
+    min-width: 2em;
+    text-align: center;
+  }
