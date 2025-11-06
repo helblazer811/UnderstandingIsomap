@@ -54,7 +54,9 @@
   <Section>
     <div slot="text">
       <div class="article-header">
-        <h1 class="hed">A Visual Introduction to Dimensionality Reduction with Isomap</h1>
+        <h1 class="hed">
+          A Visual Introduction to Dimensionality Reduction with Isomap
+        </h1>
         <div class="byline">
           By: <a href="https://alechelbling.com">Alec Helbling</a>
         </div>
@@ -65,10 +67,10 @@
         Geoffrey Hinton
       </Quote>
       <p>
-        In many domains, ranging from computational imaging to finance and
-        genomics, data comes in the form of high-dimensional signals that are
-        challenging for humans to directly reason about, as our intuition is
-        generally confined to two or three dimensions. The field of
+        In many domains, ranging from computational imaging to finance, data
+        comes in the form of high-dimensional signals that are challenging for
+        humans to directly reason about, as our intuition is generally confined
+        to two or three dimensions. The field of
         <!-- svelte-ignore a11y-invalid-attribute -->
         <a href="">dimensionality reduction</a>
         aims to compress high-dimensional data into lower-dimensional representations
@@ -86,20 +88,6 @@
           data (1D) embedded in a higher dimensional (2D) space?</em
         >
       </p>
-      <p>
-        In this article, I'll be exploring
-        <!-- svelte-ignore a11y-invalid-attribute -->
-        <a href="https://en.wikipedia.org/wiki/Isomap">Isomap</a>, a classic non-linear dimensionality reduction
-        technique that seeks to create a low dimensional embedding of data that
-        preserves its local similarity structure. Isomap builds upon the
-        manifold hypothesis, which posits that data often lies on a
-        low-dimensional manifold, despite existing in a higher dimensional
-        space. This is a classic assumption that is central to many modern
-        dimensionality reduction techniques like
-        <!-- svelte-ignore a11y-invalid-attribute -->
-        <a href="https://en.wikipedia.org/wiki/T-distributed_stochastic_neighbor_embedding">t-SNE</a> and <!-- svelte-ignore a11y-invalid-attribute -->
-        <a href="https://pair-code.github.io/understanding-umap/">UMAP</a>.
-      </p>
     </div>
     <IntroScatter
       {dataset}
@@ -112,11 +100,35 @@
   </Section>
   <Section>
     <div slot="text">
+      <p>
+        In this article, I'll be exploring
+        <!-- svelte-ignore a11y-invalid-attribute -->
+        <a href="https://en.wikipedia.org/wiki/Isomap">Isomap</a>, a classic
+        non-linear dimensionality reduction technique that seeks to create a low
+        dimensional embedding of data that preserves its local similarity
+        structure. Isomap builds upon the manifold hypothesis, which posits that
+        data often lies on a low-dimensional manifold, despite existing in a
+        higher dimensional space. This is a classic assumption that is central
+        to many modern dimensionality reduction techniques like
+        <!-- svelte-ignore a11y-invalid-attribute -->
+        <a
+          href="https://en.wikipedia.org/wiki/T-distributed_stochastic_neighbor_embedding"
+          >t-SNE</a
+        >
+        and <!-- svelte-ignore a11y-invalid-attribute -->
+        <a href="https://pair-code.github.io/understanding-umap/">UMAP</a>.
+      </p>
+    </div>
+  </Section>
+  <Section>
+    <div slot="text">
       <h2>Multidimensional Scaling</h2>
       <p>
         <!-- svelte-ignore a11y-invalid-attribute -->
-        <a href="https://en.wikipedia.org/wiki/Multidimensional_scaling">Multidimensional Scaling (MDS)</a> is a classical
-        dimensionality reduction technique that aims to take some
+        <a href="https://en.wikipedia.org/wiki/Multidimensional_scaling"
+          >Multidimensional Scaling (MDS)</a
+        >
+        is a classical dimensionality reduction technique that aims to take some
         high-dimensional data <Katex
           math={"x_1, \\dots, x_n \\in \\mathbb{R}^{d}"}
         /> and produce a lower-dimensional representation <Katex
@@ -169,7 +181,9 @@
         distance metric, the resulting low-dimensional coordinates are
         equivalent to those obtained from
         <!-- svelte-ignore a11y-invalid-attribute -->
-        <a href="https://en.wikipedia.org/wiki/Principal_component_analysis">Principal Component Analysis (PCA)</a>.
+        <a href="https://en.wikipedia.org/wiki/Principal_component_analysis"
+          >Principal Component Analysis (PCA)</a
+        >.
       </p>
       <Minimizable
         title="Explanation of Equivalence between Classical MDS and PCA"
@@ -180,7 +194,9 @@
             Interestingly, classical MDS with the Euclidean distance metric is
             equivalent to
             <!-- svelte-ignore a11y-invalid-attribute -->
-            <a href="https://en.wikipedia.org/wiki/Principal_component_analysis">Principal Components Analysis (PCA)</a>.
+            <a href="https://en.wikipedia.org/wiki/Principal_component_analysis"
+              >Principal Components Analysis (PCA)</a
+            >.
           </p>
           <h3>Definition of PCA</h3>
           <p>
@@ -386,6 +402,18 @@
           <span class="slider-value-label">5</span>
         </div>
       </div>
+    </div>
+    <EpsilonBall
+      let:active
+      {active}
+      {epsilon}
+      width={500}
+      height={250}
+      slot="visualization"
+    />
+  </Section>
+  <Section>
+    <div slot="text">
       <h2>Building a Graph from Local Neighborhoods</h2>
       <Quote>
         How can we embed data that is locally Euclidean but globally
@@ -400,7 +428,11 @@
         similarity structure. This is central to many more powerful
         dimensionality reduction techniques like
         <!-- svelte-ignore a11y-invalid-attribute -->
-        <a href="https://en.wikipedia.org/wiki/T-distributed_stochastic_neighbor_embedding">t-SNE</a> and <!-- svelte-ignore a11y-invalid-attribute -->
+        <a
+          href="https://en.wikipedia.org/wiki/T-distributed_stochastic_neighbor_embedding"
+          >t-SNE</a
+        >
+        and <!-- svelte-ignore a11y-invalid-attribute -->
         <a href="https://pair-code.github.io/understanding-umap/">UMAP</a>.
       </p>
       <p>
@@ -411,8 +443,24 @@
         with an adjacency matrix <Katex math={"A"} /> where
         <Katex math={"A_{ij} = 1"} /> if points <Katex math={"i"} /> and <Katex
           math={"j"}
-        /> are connected and <Katex math={"A_{ij} = 0"} /> otherwise. Another simple
-        choice is to connect each point to its k-nearest neighbors.
+        /> are connected and <Katex math={"A_{ij} = 0"} /> otherwise.
+      </p>
+    </div>
+    <EpsilonGraph
+      let:active
+      {active}
+      {epsilon}
+      width={500}
+      height={250}
+      slot="visualization"
+    />
+  </Section>
+  <Section>
+    <div slot="text">
+      <h2>k-Nearest Neighbor Graphs</h2>
+      <p>
+        Another simple choice is to connect each point to its k-nearest
+        neighbors.
       </p>
       <!-- K slider -->
       <!-- <input type="range" min="1" max="10" step="1" value="5" /> -->
@@ -438,15 +486,14 @@
         </p>
       </div>
     </div>
-    <div
-      slot="visualization"
+    <KNNGraph
       let:active
-      style="display: flex; flex-direction: column; align-items: center; justify-content: center;"
-    >
-      <EpsilonBall let:active {active} {epsilon} width={500} height={250} />
-      <EpsilonGraph let:active {active} {epsilon} width={500} height={250} />
-      <KNNGraph let:active {active} {k} width={500} height={250} />
-    </div>
+      {active}
+      {k}
+      width={500}
+      height={250}
+      slot="visualization"
+    />
   </Section>
   <Section>
     <div slot="text">
