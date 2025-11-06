@@ -89,7 +89,7 @@
       <p>
         In this article, I'll be exploring
         <!-- svelte-ignore a11y-invalid-attribute -->
-        <a href="">Isomap</a>, a classic non-linear dimensionality reduction
+        <a href="https://en.wikipedia.org/wiki/Isomap">Isomap</a>, a classic non-linear dimensionality reduction
         technique that seeks to create a low dimensional embedding of data that
         preserves its local similarity structure. Isomap builds upon the
         manifold hypothesis, which posits that data often lies on a
@@ -97,8 +97,8 @@
         space. This is a classic assumption that is central to many modern
         dimensionality reduction techniques like
         <!-- svelte-ignore a11y-invalid-attribute -->
-        <a href="">t-SNE</a> and <!-- svelte-ignore a11y-invalid-attribute -->
-        <a href="">UMAP</a>.
+        <a href="https://en.wikipedia.org/wiki/T-distributed_stochastic_neighbor_embedding">t-SNE</a> and <!-- svelte-ignore a11y-invalid-attribute -->
+        <a href="https://pair-code.github.io/understanding-umap/">UMAP</a>.
       </p>
     </div>
     <IntroScatter
@@ -115,7 +115,7 @@
       <h2>Multidimensional Scaling</h2>
       <p>
         <!-- svelte-ignore a11y-invalid-attribute -->
-        <a href="">Multidimensional Scaling (MDS)</a> is a classical
+        <a href="https://en.wikipedia.org/wiki/Multidimensional_scaling">Multidimensional Scaling (MDS)</a> is a classical
         dimensionality reduction technique that aims to take some
         high-dimensional data <Katex
           math={"x_1, \\dots, x_n \\in \\mathbb{R}^{d}"}
@@ -169,7 +169,7 @@
         distance metric, the resulting low-dimensional coordinates are
         equivalent to those obtained from
         <!-- svelte-ignore a11y-invalid-attribute -->
-        <a href="">Principal Components Analysis (PCA)</a>.
+        <a href="https://en.wikipedia.org/wiki/Principal_component_analysis">Principal Component Analysis (PCA)</a>.
       </p>
       <Minimizable
         title="Explanation of Equivalence between Classical MDS and PCA"
@@ -180,7 +180,7 @@
             Interestingly, classical MDS with the Euclidean distance metric is
             equivalent to
             <!-- svelte-ignore a11y-invalid-attribute -->
-            <a href="">Principal Components Analysis (PCA)</a>.
+            <a href="https://en.wikipedia.org/wiki/Principal_component_analysis">Principal Components Analysis (PCA)</a>.
           </p>
           <h3>Definition of PCA</h3>
           <p>
@@ -400,8 +400,8 @@
         similarity structure. This is central to many more powerful
         dimensionality reduction techniques like
         <!-- svelte-ignore a11y-invalid-attribute -->
-        <a href="">t-SNE</a> and <!-- svelte-ignore a11y-invalid-attribute -->
-        <a href="">UMAP</a>.
+        <a href="https://en.wikipedia.org/wiki/T-distributed_stochastic_neighbor_embedding">t-SNE</a> and <!-- svelte-ignore a11y-invalid-attribute -->
+        <a href="https://pair-code.github.io/understanding-umap/">UMAP</a>.
       </p>
       <p>
         One interesting choice for constructing a graph that captures local
