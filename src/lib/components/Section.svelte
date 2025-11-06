@@ -83,7 +83,7 @@
       align-items: center;
     }
     .text-plot-section .text-container {
-      width: 95%;
+      width: 92%;
       margin-left: 0px;
     }
     .text-plot-section .plot {

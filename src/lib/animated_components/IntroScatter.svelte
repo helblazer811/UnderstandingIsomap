@@ -13,7 +13,11 @@
   export let radius = 5;
   export let colorScheme = d3.interpolateViridis;
   export let pointOpacity = 0.6;
+  // Control the axis draw duration and the pause between repeats
+  export let axisDuration = 3000;
+  export let repeatDelay = 1200;
   let svgEl; // local reference to the <svg> element
+  let isAnimating = false;
 
   /**
    * Animates existing points to their spiral positions.
@@ -268,10 +272,23 @@
     plotScatter(svg, dataset);
   }
 
+  async function runAxisLoop() {
+    if (isAnimating) return; // prevent overlapping loops
+    isAnimating = true;
+    const svg = d3.select(svgEl);
+    while (active) {
+      animateIntrinsicDimensionAxis(svg, dataset, axisDuration);
+      // wait for animation to finish plus a small pause
+      await new Promise((r) => setTimeout(r, axisDuration + repeatDelay));
+    }
+    isAnimating = false;
+  }
+
+  // Start or resume the loop when conditions are met
   $: if (active && dataset && svgEl) {
     const svg = d3.select(svgEl);
-    // animateScatterToSpiral(points, dataset, 2000);
-    animateIntrinsicDimensionAxis(svg, dataset, 3000);
+    plotScatter(svg, dataset);
+    runAxisLoop();
   }
 
 </script>

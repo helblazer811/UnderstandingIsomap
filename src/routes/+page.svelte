@@ -124,10 +124,8 @@
     <div slot="text">
       <h2>Multidimensional Scaling</h2>
       <p>
-        <!-- svelte-ignore a11y-invalid-attribute -->
-        <a href="https://en.wikipedia.org/wiki/Multidimensional_scaling"
-          >Multidimensional Scaling (MDS)</a
-        >
+        One of the steps in Isomap is to perform <a href="https://en.wikipedia.org/wiki/Multidimensional_scaling">Multidimensional Scaling (MDS)</a>
+        on a matrix of pairwise graph distances between points. MDS
         is a classical dimensionality reduction technique that aims to take some
         high-dimensional data <Katex
           math={"x_1, \\dots, x_n \\in \\mathbb{R}^{d}"}
@@ -136,7 +134,7 @@
         /> where the pairwise distances between points are preserved as well as possible.
       </p>
       <p>
-        Multi-dimensional scaling assumes that we only have access to pairwise
+        MDS assumes that we only have access to pairwise
         distances between points
         <Katex math={"d_{ij}"} /> rather than the original coordinates of the points
         themselves. In it's simplest form, called classical MDS, we use the Euclidean

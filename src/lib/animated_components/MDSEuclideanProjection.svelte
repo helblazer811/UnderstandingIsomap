@@ -1,4 +1,5 @@
 <script>
+  //@ts-nocheck
   /* 
         Plot for multi-dimensional scaling (MDS)
         
@@ -25,6 +26,7 @@
   export let margin = 40;
   export let pointOpacity = 0.8;
   export let colorScheme = d3.interpolateViridis;
+  export let repeatDelay = 1500; // ms pause before repeating when active
 
   let pcaResult = null;
   let pcaProjections = null;
@@ -313,9 +315,16 @@
       .on("end", function() {
         // Allow animation again after a delay
         if (remainingCircleRotations == 1) {
-            animatingProjection = false;
+          animatingProjection = false;
+          if (active) {
+            setTimeout(() => {
+              if (active && !animatingProjection) {
+                animateProjection(svg, dataset);
+              }
+            }, repeatDelay);
+          }
         } else {
-            remainingCircleRotations -= 1;
+          remainingCircleRotations -= 1;
         }
       });
   }
