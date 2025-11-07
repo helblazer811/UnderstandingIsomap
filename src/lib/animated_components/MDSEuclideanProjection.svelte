@@ -165,7 +165,6 @@
     } else {
       return; // Prevent overlapping animations
     }
-    console.log("Starting projection animation");
     // Remove previous layers
     svg.selectAll(".eigenvector-projection-group").remove();
     svg.selectAll(".pc-arrows").remove();
@@ -329,20 +328,6 @@
       });
   }
 
-  //   $: if (active && svgEl && showIntrinsicDimension) {
-  //     const svg = d3.select(svgEl);
-  //     plotIntrinsicDimensionAxis(svg, dataset, 1200);
-  //   }
-
-//   $: if (active && svgEl && showEigenvectors) {
-//     const svg = d3.select(svgEl);
-//     plotEigenvectors(svg, dataset);
-//   }
-
-//   $: if (active && svgEl && playAnimation && !animatingProjection && pcaResult != null && pcaProjections != null) {
-//     console.log("Starting projection animation");
-//   }
-
   $: if (dataset) {
     pcaResult = computePCA(dataset.data);
     pcaProjections = projectOntoFirstPrincipalComponent(dataset.data);
@@ -362,11 +347,14 @@
   
 </script>
 
-<svg
-  bind:this={svgEl}
-  viewBox={`0 0 ${width} ${height}`}
-  preserveAspectRatio="xMidYMid meet"
-  {width}
-  {height}
-  style="display:block; width: 100%; max-width: {width}px; height: auto; opacity: {active ? 1 : settings.inactiveOpacity}"
-></svg>
+<div class="figure-wrapper">
+  <svg
+    bind:this={svgEl}
+    viewBox={`0 0 ${width} ${height}`}
+    preserveAspectRatio="xMidYMid meet"
+    {width}
+    {height}
+    style="display:block; width: 100%; max-width: {width}px; height: auto; opacity: {active ? 1 : settings.inactiveOpacity}"
+  ></svg>
+  <p class="figure-caption">Figure 2: Classical MDS with Euclidean distances projects data along the axes of maximum variance (i.e., the principal components).</p>
+</div>

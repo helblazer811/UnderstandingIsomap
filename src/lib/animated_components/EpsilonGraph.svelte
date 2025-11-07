@@ -14,7 +14,7 @@
   export let colorScheme = d3.interpolateViridis;
   export let epsilon = 1;
   export let numPoints = 90;
-  export let graphShowDuration = 2000;
+  export let graphShowDuration = 4000;
   export let pointOpacity = 0.6;
   export let growDuration = 2000; // ms to grow epsilon from 0 to maxEpsilon
   export let maxEpsilon = 1.5; // target epsilon radius at peak (data units)
@@ -85,7 +85,7 @@
             .attr("y2", yScale(p2.y))
             .attr("stroke", "#1976d2")
             .attr("stroke-width", 2)
-            .attr("opacity", 0.3)
+            .attr("opacity", 0.8)
             .style("pointer-events", "none");
         }
       }
@@ -109,11 +109,7 @@
 
             // Plot directly here instead of reactive block
             const svg = d3.select(svgEl);
-            plotAllEpsilonBalls(
-              svg,
-              dataset,
-              animatedEpsilonRadius
-            );
+            plotAllEpsilonBalls(svg, dataset, animatedEpsilonRadius);
 
             requestAnimationFrame(animate);
           } else {
@@ -121,11 +117,7 @@
 
             // Final frame
             const svg = d3.select(svgEl);
-            plotAllEpsilonBalls(
-              svg,
-              dataset,
-              animatedEpsilonRadius
-            );
+            plotAllEpsilonBalls(svg, dataset, animatedEpsilonRadius);
 
             resolve();
           }
@@ -137,9 +129,9 @@
       // Hold at max epsilon before plotting the graph
       await new Promise((r) => setTimeout(r, waitDuration));
 
-  // Show the graph: first remove any epsilon balls, then draw the graph
-  const svg = d3.select(svgEl);
-  svg.selectAll("g.all-epsilon-balls-group").remove();
+      // Show the graph: first remove any epsilon balls, then draw the graph
+      const svg = d3.select(svgEl);
+      svg.selectAll("g.all-epsilon-balls-group").remove();
       plotEpsilonNeighborhoodGraph(svg, dataset, epsilon);
 
       // Hold the graph briefly
@@ -157,7 +149,6 @@
   // -------------------------------
   // Reactive rendering
   // -------------------------------
-  
 
   // Plot scatter initially
   $: if (dataset && active) {
@@ -178,12 +169,18 @@
   });
 </script>
 
-<svg
-  bind:this={svgEl}
-  viewBox={`0 0 ${width} ${height}`}
-  preserveAspectRatio="xMidYMid meet"
-  {width}
-  {height}
-  style="display:block; width: 100%; max-width: {width}px; height: auto;"
-  style:opacity={active ? 1 : settings.inactiveOpacity}
-></svg>
+<div class="figure-wrapper">
+  <svg
+    bind:this={svgEl}
+    viewBox={`0 0 ${width} ${height}`}
+    preserveAspectRatio="xMidYMid meet"
+    {width}
+    {height}
+    style="display:block; width: 100%; max-width: {width}px; height: auto;"
+    style:opacity={active ? 1 : settings.inactiveOpacity}
+  ></svg>
+  <p class="figure-caption">
+    Figure 5: Graph formed by connecting the points in each epsilon
+    neighborhood.
+  </p>
+</div>

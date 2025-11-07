@@ -131,7 +131,6 @@
    * @param {number} durationMs - Animation duration in milliseconds (default 1200ms)
    */
   function animateIntrinsicDimensionAxis(svg, data, durationMs = 1200) {
-    console.log("Animating intrinsic dimension axis...");
     // Remove previous axis
     svg.selectAll("g.intrinsic-dimension-axis").remove();
 
@@ -263,10 +262,6 @@
       .text("Latent 1D Manifold");
   }
 
-  $: if (active) {
-    console.log("Animating intrinsic dimension axis...");
-  }
-
   $: if (dataset && svgEl) {
     const svg = d3.select(svgEl);
     plotScatter(svg, dataset);
@@ -290,15 +285,17 @@
     plotScatter(svg, dataset);
     runAxisLoop();
   }
-
 </script>
 
-<svg
-  bind:this={svgEl}
-  viewBox={`0 0 ${width} ${height}`}
-  preserveAspectRatio="xMidYMid meet"
-  {width}
-  {height}
-  style="display:block; width: 100%; max-width: {width}px; height: auto;"
-  style:opacity={active ? 1 : settings.inactiveOpacity}
-></svg>
+<div class="figure-wrapper">
+  <svg
+    bind:this={svgEl}
+    viewBox={`0 0 ${width} ${height}`}
+    preserveAspectRatio="xMidYMid meet"
+    {width}
+    {height}
+    style="display:block; width: 100%; max-width: {width}px; height: auto;"
+    style:opacity={active ? 1 : settings.inactiveOpacity}
+  ></svg>
+  <p class="figure-caption">Figure 1: A noisy spiral dataset illustrating a 1D manifold embedded in 2D.</p>
+</div>

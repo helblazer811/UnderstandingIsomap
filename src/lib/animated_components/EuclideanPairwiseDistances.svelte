@@ -88,7 +88,6 @@
     if (!active) return;
     const animationId = ++currentAnimationId;
     animationInProgress = true;
-    console.log("Starting pairwise distances animation");
 
     const dataArr = dataset.data;
     const startPoint = dataArr[startIdx];
@@ -184,12 +183,15 @@
   
 </script>
 
-<svg
-  bind:this={svgEl}
-  viewBox={`0 0 ${width} ${height}`}
-  preserveAspectRatio="xMidYMid meet"
-  {width}
-  {height}
-  style="display:block; width: 100%; max-width: {width}px; height: auto;"
-  style:opacity={active ? 1 : settings.inactiveOpacity}
-></svg>
+<div class="figure-wrapper">
+  <svg
+    bind:this={svgEl}
+    viewBox={`0 0 ${width} ${height}`}
+    preserveAspectRatio="xMidYMid meet"
+    {width}
+    {height}
+    style="display:block; width: 100%; max-width: {width}px; height: auto;"
+    style:opacity={active ? 1 : settings.inactiveOpacity}
+  ></svg>
+  <p class="figure-caption">Figure 3: Pairwise Euclidean distances drawn from a selected point to all others.</p>
+</div>

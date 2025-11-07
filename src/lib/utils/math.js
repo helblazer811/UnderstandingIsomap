@@ -280,13 +280,10 @@ export function computeMDS(pairwiseDistances, data, nComponents = 2) {
   // Double centering
   const B = math.multiply(-0.5, math.multiply(math.multiply(C, D2), C));
 
-  console.log("Double centered.");
-
   // Top eigenpair via power iteration (replace eigs)
   const { eigenvalue: topValRaw, eigenvector: topVecRaw } = powerIteration(B);
   const topVal = Math.max(0, topValRaw);
   const topVec = Array.isArray(topVecRaw) ? topVecRaw : topVecRaw.toArray();
-  console.log("Power iteration completed.");
 
   // 1D coordinates from top eigenvector
   const coords1D = Array.from(
@@ -531,10 +528,8 @@ export function computeIsomap(data, k) {
   // This is basically MDS on the geodesic pairwise distance matrix
   // NOTE: Assuming going from 2 to 1 dimension here.
   // 1. Construct KNN graph
-  console.log("Computing KNN graph...");
   const knnAdjacencyMatrix = computeKNearestNeighborGraph(data, k);
   // 1.5. Ensure the graph is connected by bridging components via nearest cross-component pair
-  console.log("Connecting disconnected components if any...");
   const connectedAdjacencyMatrix = connectDisconnectedComponents(
     knnAdjacencyMatrix,
     data
@@ -557,9 +552,7 @@ export function computeIsomap(data, k) {
   }
   // Get end time
   const endTime = performance.now();
-  console.log(`Geodesic distance computation took ${endTime - startTime} ms`);
   // 3. Compute MDS on these geodesic pairwise distances
-  console.log("Computing MDS on geodesic distances...");
   const mds = computeMDS(geodesicDistances, data);
   return mds;
 }

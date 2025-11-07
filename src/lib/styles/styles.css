@@ -108,7 +108,7 @@ li {
   }
   .slider-main-label {
     font-size: 1.1em;
-    font-weight: bold;
+    font-weight: normal; /* changed from bold to normal per request */
     /* color: #1976d2; */
     /* margin-bottom: 0.2em; */
   }
@@ -118,3 +118,23 @@ li {
     min-width: 2em;
     text-align: center;
   }
+
+/* Global figure styles for visualizations */
+.figure-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  margin: 0 auto;
+}
+
+.figure-caption {
+  width: 92%;
+  font-size: 1.1rem;
+  line-height: 1.3;
+  color: #555;
+  font-style: italic;
+  margin-top: 6px;
+  text-align: left;
+  /* max-width: 90%; */
+}

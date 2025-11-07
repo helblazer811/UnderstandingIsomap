@@ -12,6 +12,7 @@
   import * as settings from "$lib/settings.js";
   import {
     computeIsomap,
+    computeKNearestNeighborGraph,
   } from "$lib/utils/math.js";
 
   export let active = false;
@@ -30,6 +31,11 @@
   let isomapCoords = null;
   let animatingProjection = false;
   let remainingCircleRotations = null;
+  // Orchestrated cycle: scatter -> pause -> show kNN graph -> project with edges following -> hold -> restart
+  export let preGraphDelay = 800; // ms before showing graph
+  // reuse repeatDelay (already exported) as post-projection hold
+  let cycleRunning = false;
+  let restartTimeoutId = null;
 
   // Animation timing controls (in ms) as a single object
   export const projectionAnimation = {
@@ -83,18 +89,105 @@
       .attr("opacity", pointOpacity);
   }
 
+  function getScales(dataset) {
+    const xs = dataset.data.map((p) => p.x);
+    const ys = dataset.data.map((p) => p.y);
+    const xExtent = d3.extent(xs);
+    const yExtent = d3.extent(ys);
+    const xPad = (xExtent[1] - xExtent[0]) * 0.1;
+    const yPad = (yExtent[1] - yExtent[0]) * 0.1;
+    const xScale = d3
+      .scaleLinear()
+      .domain([xExtent[0] - xPad, xExtent[1] + xPad])
+      .range([margin, width - margin]);
+    const yScale = d3
+      .scaleLinear()
+      .domain([yExtent[0] - yPad, yExtent[1] + yPad])
+      .range([height - margin, margin]);
+    return { xScale, yScale };
+  }
+
+  function plotKNNGraphAllAtOnce(svg, dataset, k) {
+    svg.selectAll("g.iso-knn-graph").remove();
+    const { xScale, yScale } = getScales(dataset);
+    const group = svg.append("g").attr("class", "iso-knn-graph");
+
+    const adj = computeKNearestNeighborGraph(dataset.data, k);
+    const edges = [];
+    for (let i = 0; i < adj.length; i++) {
+      for (let j = i + 1; j < adj.length; j++) {
+        const w = adj[i][j];
+        if (w !== Infinity && w !== 0) {
+          edges.push({ i, j });
+        }
+      }
+    }
+
+    group
+      .selectAll("line")
+      .data(edges)
+      .enter()
+      .append("line")
+      .attr("x1", (d) => xScale(dataset.data[d.i].x))
+      .attr("y1", (d) => yScale(dataset.data[d.i].y))
+      .attr("x2", (d) => xScale(dataset.data[d.j].x))
+      .attr("y2", (d) => yScale(dataset.data[d.j].y))
+      .attr("stroke", "#1976d2")
+      .attr("stroke-width", 2)
+      .attr("opacity", 0.85)
+      .style("pointer-events", "none");
+  }
+
+  async function runCycle(svg, dataset) {
+    if (cycleRunning) return;
+    cycleRunning = true;
+    // Start from original scatter
+    plotScatter(svg, dataset);
+    // Wait before revealing graph
+    await new Promise((resolve) => setTimeout(resolve, preGraphDelay));
+    // Show KNN graph (stays during projection)
+    plotKNNGraphAllAtOnce(svg, dataset, k);
+    // Let browser paint once
+    await new Promise((resolve) => requestAnimationFrame(() => resolve()));
+    // Kick off projection animation (edges will follow inside)
+    animateProjection(svg, dataset);
+  }
+
+  async function runKNNPhase(svg, dataset) {
+    knnPhaseRunning = true;
+    knnPhaseCancelled = false;
+    // Clean overlays
+    svg.selectAll("g.iso-knn-graph").remove();
+    // Draw scatter fresh to ensure clean base
+    plotScatter(svg, dataset);
+    plotKNNGraphAllAtOnce(svg, dataset, k);
+    // Small settle time (0ms) so browser paints, then hold
+    await new Promise((resolve) => requestAnimationFrame(() => resolve()));
+    if (knnPhaseCancelled) {
+      svg.selectAll("g.iso-knn-graph").remove();
+      knnPhaseRunning = false;
+      return;
+    }
+    // Hold with full graph visible
+    await new Promise((resolve) => {
+      knnTimeoutId = setTimeout(resolve, knnHoldDuration);
+    });
+    // Clear before projection
+    svg.selectAll("g.iso-knn-graph").remove();
+    knnPhaseRunning = false;
+  }
+
   async function animateProjection(svg, dataset) {
     if (!animatingProjection) {
       animatingProjection = true;
     } else {
       return; // Prevent overlapping animations
     }
-    console.log("Starting Isomap projection animation");
     // Clean overlays and revert to original scatter before animating
     svg.selectAll(".eigenvector-projection-group").remove();
     svg.selectAll(".pc-arrows").remove();
     svg.selectAll("g.intrinsic-dimension-axis").remove();
-    plotScatter(svg, dataset);
+    // Keep existing scatter and any KNN graph; do not clear those here
     // Build scales for original and Isomap coordinates
     const xs = dataset.data.map((p) => p.x);
     const ys = dataset.data.map((p) => p.y);
@@ -139,9 +232,10 @@
 
     remainingCircleRotations = sel.size();
 
+    const durationMs = 5000;
     sel
       .transition()
-      .duration(5000)
+      .duration(durationMs)
       .attr("cx", (d) => d.x)
       .attr("cy", (d) => d.y)
       .ease(d3.easeCubicInOut)
@@ -152,21 +246,37 @@
         } else {
           remainingCircleRotations = 0;
           animatingProjection = false;
+          // Remove KNN graph at end of projection
+          svg.selectAll("g.iso-knn-graph").remove();
+          // Hold on projected points, then restart full cycle
           if (active) {
-            setTimeout(() => {
+            restartTimeoutId = setTimeout(() => {
               if (active && !animatingProjection) {
-                animateProjection(svg, dataset);
+                cycleRunning = false; // allow next run
+                runCycle(svg, dataset);
               }
             }, repeatDelay);
+          } else {
+            cycleRunning = false;
           }
         }
       });
+
+    // Also animate KNN edges' endpoints to follow the nodes
+    svg
+      .selectAll("g.iso-knn-graph line")
+      .transition()
+      .duration(durationMs)
+      .ease(d3.easeCubicInOut)
+      .attr("x1", (d) => isoXScale(isomapCoords[d.i][0]))
+      .attr("y1", (d) => isoYScale(isomapCoords[d.i][1]))
+      .attr("x2", (d) => isoXScale(isomapCoords[d.j][0]))
+      .attr("y2", (d) => isoYScale(isomapCoords[d.j][1]));
   }
 
   $: if (dataset) {
     isomapResult = computeIsomap(dataset.data, k);
     isomapCoords = isomapResult.coordinates;
-    console.log("Computed Isomap coordinates:", isomapCoords);
   }
 
   $: if (dataset && svgEl) {
@@ -174,20 +284,31 @@
     plotScatter(svg, dataset);
   }
 
-  // Optional: re-plot if dataset changes
+  // Optional: start cycle when active
   $: if (dataset && svgEl && active) {
     const svg = d3.select(svgEl);
-    animateProjection(svg, dataset);
+    if (!cycleRunning && !animatingProjection) {
+      runCycle(svg, dataset);
+    }
+  }
+
+  // Cancel timers if deactivated
+  $: if (!active) {
+    if (restartTimeoutId) clearTimeout(restartTimeoutId);
+    cycleRunning = false;
   }
 
 </script>
 
-<svg
-  bind:this={svgEl}
-  viewBox={`0 0 ${width} ${height}`}
-  preserveAspectRatio="xMidYMid meet"
-  {width}
-  {height}
-  style="display:block; width: 100%; max-width: {width}px; height: auto;"
-  style:opacity={active ? 1 : settings.inactiveOpacity}
-></svg>
+<div class="figure-wrapper">
+  <svg
+    bind:this={svgEl}
+    viewBox={`0 0 ${width} ${height}`}
+    preserveAspectRatio="xMidYMid meet"
+    {width}
+    {height}
+    style="display:block; width: 100%; max-width: {width}px; height: auto;"
+    style:opacity={active ? 1 : settings.inactiveOpacity}
+  ></svg>
+  <p class="figure-caption">Figure 8: Isomap embedding preserves manifold structure using graph geodesic distances.</p>
+</div>

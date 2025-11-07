@@ -78,8 +78,9 @@
         to interpret.
       </p>
       <p>
-        On the right we have a classic spiral dataset, which is a one
-        dimensional <em>manifold</em>
+        In Figure 1 we have a classic spiral dataset, which is a one dimensional <em
+          >manifold</em
+        >
         embedded in a two dimensional space. The
         <span class="viridis-gradient-text">color of each point </span>
         represents its position along this intrinsic dimension.
@@ -94,7 +95,7 @@
       let:active
       {active}
       width={500}
-      height={500}
+      height={400}
       slot="visualization"
     />
   </Section>
@@ -124,18 +125,20 @@
     <div slot="text">
       <h2>Multidimensional Scaling</h2>
       <p>
-        One of the steps in Isomap is to perform <a href="https://en.wikipedia.org/wiki/Multidimensional_scaling">Multidimensional Scaling (MDS)</a>
-        on a matrix of pairwise graph distances between points. MDS
-        is a classical dimensionality reduction technique that aims to take some
-        high-dimensional data <Katex
-          math={"x_1, \\dots, x_n \\in \\mathbb{R}^{d}"}
-        /> and produce a lower-dimensional representation <Katex
+        One of the steps in Isomap is to perform <a
+          href="https://en.wikipedia.org/wiki/Multidimensional_scaling"
+          >Multidimensional Scaling (MDS)</a
+        >
+        on a matrix of pairwise graph distances between points. MDS is a classical
+        dimensionality reduction technique that aims to take some high-dimensional
+        data <Katex math={"x_1, \\dots, x_n \\in \\mathbb{R}^{d}"} /> and produce
+        a lower-dimensional representation <Katex
           math={"y_1, \\dots, y_n \\in \\mathbb{R}^{p}"}
         /> where the pairwise distances between points are preserved as well as possible.
       </p>
       <p>
-        MDS assumes that we only have access to pairwise
-        distances between points
+        MDS assumes that we only have access to pairwise distances between
+        points
         <Katex math={"d_{ij}"} /> rather than the original coordinates of the points
         themselves. In it's simplest form, called classical MDS, we use the Euclidean
         distance metric <Katex math={"d_{ij} = ||x_i - x_j||_2"} />. MDS then
@@ -143,12 +146,7 @@
           math={"y_1, \\dots, y_n \\in \\mathbb{R}^{p}"}
         /> such that the distances between these new points approximate the original
         distances
-        <Katex math={"||y_i - y_j||_2 \\approx d_{ij}"} />. In particular, MDS
-        tries to minimize the stress function
-        <Katex
-          math={"\n  \\text{Stress} = \\sum_{i<j} (||y_i - y_j||_2 - d_{ij})^2. "}
-          displayMode={true}
-        />
+        <Katex math={"||y_i - y_j||_2 \\approx d_{ij}"} />.
       </p>
       <p>
         Instead of directly operating on our pairwise distances, represented by
@@ -158,9 +156,12 @@
         matrix to produce a Gram matrix <Katex
           math={"B = -\\frac{1}{2} H D^2 H,"}
           displayMode={true}
-        /> where <Katex math={"H = I - \\frac{1}{n} 11^T"} /> is the centering matrix.
-        The centering matrix <Katex math={"H"} /> centers the data by subtracting
-        the mean from each point.
+        /> where <Katex
+          math={"H = I - \\frac{1}{n} \\mathbf{1}\\mathbf{1}^T"}
+        /> is the centering matrix. Here <Katex math={"\\mathbf{1}"} /> is a vector
+        of all ones of length <Katex math={"n"} />. The centering matrix <Katex
+          math={"H"}
+        /> centers the data by subtracting the mean from each point.
       </p>
       <p>
         Given this Gram matrix we can then perform an eigen decomposition
@@ -173,6 +174,7 @@
         <Katex math={"\n  Y = V_p \\Lambda_p^{1/2} "} displayMode={true} /> where
         <Katex math={"V_p"} /> contains the top <Katex math={"p"} /> eigenvectors
         and <Katex math={"\\Lambda_p"} /> contains the top <Katex math={"p"} /> eigenvalues.
+        These coordinates are shown in Figure 2.
       </p>
       <p>
         An interesting fact about classical MDS is that when using the Euclidean
@@ -183,6 +185,18 @@
           >Principal Component Analysis (PCA)</a
         >.
       </p>
+    </div>
+    <MDSPlot
+      {dataset}
+      let:active
+      {active}
+      width={500}
+      height={400}
+      slot="visualization"
+    />
+  </Section>
+  <Section>
+    <div slot="text">
       <Minimizable
         title="Explanation of Equivalence between Classical MDS and PCA"
       >
@@ -256,86 +270,19 @@
               displayMode={true}
             />
           </p>
-
-          <!-- 
-            For MDS we compute the low-dimensional coordinates using the eigenvectors of <Katex
-              math={"B"} /> giving us
-            <Katex
-              math={"Y = U_p \\Lambda_p^{1/2} = U_p \\Sigma_p"}
-              displayMode={true}/>
-
-
-
-
-            The covariance matrix <Katex math={"X^T X"} /> of centered data <Katex
-              math={"X"}
-            /> can be written as
-            <Katex
-              math={"X^T X = (U \\Sigma V^T)^T(U \\Sigma V^T) = (V \\Sigma U^T) (U \\Sigma V^T) = V \\Sigma^2 V^T."}
-              displayMode={true}
-            />
-            The data can be projected onto the principal components leading to <Katex
-              math={"Y = X V_p = U \\Sigma V^T V_p = U_p \\Sigma_p"}
-              displayMode={true}
-            /> where <Katex math={"\\Sigma_p"} /> contains the top <Katex
-              math={"p"}
-            /> singular values.
-          </p>
-          <p>
-            On the other hand, the double centered Gram matrix used in MDS can
-            be written as
-            <Katex
-              math={"B = -\\frac{1}{2} H D^2 H = -\\frac{1}{2} H (X X^T) H."}
-              displayMode={true}
-            />
-            If we assume that our data is already centered (i.e. <Katex
-              math={"HX = X"}
-            />), then we have that <Katex
-              math={"B = -\\frac{1}{2} H D^2 H = -\\frac{1}{2} H (X X^T) H \\propto X X^T."}
-              displayMode={true}
-            />
-            Using the SVD of <Katex math={"X"} />, we can write the Gram matrix
-            as
-            <Katex
-              math={"X X^T = (U \\Sigma V^T)(U \\Sigma V^T)^T = U \\Sigma^2 U^T."}
-              displayMode={true}
-            />
-            The low-dimensional coordinates obtained from MDS are given by <Katex
-              math={"Y = U_p \\Lambda_p^{1/2} = U_p \\Sigma_p"}
-              displayMode={true}
-            /> where <Katex math={"\\Sigma_p"} /> contains the top <Katex
-              math={"p"}
-            /> singular values, using the fact that the singular values are the square
-            roots of the eigenvalues.
-          </p>
-          <p>
-            Thus we see that both PCA coordinates and MDS coordinates are
-            identical when using the Euclidean distance metric (up to scaling
-            and rotation).
-            It is in fact the case that the projections obtained from PCA are the same (up to scaling and rotation) as those obtained from classical MDS with the Euclidean distance metric. 
-          </p>
-         -->
         </div>
       </Minimizable>
-    </div>
-    <MDSPlot
-      {dataset}
-      let:active
-      {active}
-      width={500}
-      height={500}
-      slot="visualization"
-    />
-  </Section>
+    </div></Section
+  >
   <!-- <MDSPlot {dataset} /> -->
   <!-- <PCAScatter {dataset} /> -->
   <Section>
     <div slot="text">
       <h2>Limitations of MDS with Euclidean Distance</h2>
       <p>
-        We can see that with the choice of Euclidean distance as our metric for
-        <Katex math={"d_{ij}"} />, MDS amounts to projecting out data onto the
-        first
+        We can see in Figure 2 that when using Euclidean distance as our metric
+        for
+        <Katex math={"d_{ij}"} />, MDS amounts to projecting data onto the first
         <Katex math={"k"} /> principal components. While this is a powerful technique
         for many types of data, for our spiral dataset it fails to capture the intrinsic
         structure of the data because it is restricted to linear axes in the original
@@ -350,17 +297,16 @@
         </b>
         That is, while Euclidean distance may not be a good measure of similarity
         between points that are far apart, it works reasonably well for points that
-        are close together! This can be seen in the dataset on the right. The closest
-        points to a given point in Euclidean distance are indeed nearby along the
-        spiral, however points that are a medium Euclidean distance away may be very
-        far apart along the spiral.
+        are close together (Figure 3)! The closest points to a given point in Euclidean
+        distance are indeed nearby along the spiral, however points that are a medium
+        Euclidean distance away may be very far apart along the spiral.
       </p>
     </div>
     <EuclideanPairwiseDistances
       let:active
       {active}
       width={500}
-      height={300}
+      height={200}
       slot="visualization"
     />
   </Section>
@@ -368,24 +314,25 @@
     <div slot="text">
       <h2>Epsilon Neighborhoods</h2>
       <p>
-        One way to formalize the idea of locality is through neighborhoods. If
-        you draw a circle around a point (called an epsilon neighborhood). That
-        is the region about a point <Katex math={"x_i"} /> defined as
+        One way to formalize the idea of locality is through neighborhoods. You
+        can draw a circle (hypersphere) around a point (called an epsilon
+        neighborhood). That is the region about a point <Katex math={"x_i"} /> defined
+        as
         <Katex
           math={"N_\\epsilon(x_i) = \\{ x_j : ||x_i - x_j||_2 < \\epsilon \\}"}
           displayMode={true}
         />
-        for some small value of <Katex math={"\\epsilon"} />. Look and notice
-        that the points that fall within this circle when <Katex
+        for some small value of <Katex math={"\\epsilon"} />. See a depiction of
+        this in Figure 4. Look and notice that the points that fall within this
+        circle when <Katex math={"\\epsilon"} /> is small are also close to the point
+        along the spiral's intrinsic dimension. However, if we increase <Katex
           math={"\\epsilon"}
-        /> is small are also close to the point along the spiral's intrinsic dimension.
-        However, if we increase <Katex math={"\\epsilon"} />, we start to
-        include points that are nearby in Euclidean distance but far apart along
-        the spiral.
+        />, we start to include points that are nearby in Euclidean distance but
+        far apart along the spiral.
       </p>
       <div class="slider-container">
         <label class="slider-main-label">
-          <Katex math={"\\epsilon"} />
+          <Katex math={`\\epsilon = ${epsilon.toFixed(2)}`}/>
         </label>
         <div class="slider-row">
           <span class="slider-value-label">0</span>
@@ -406,7 +353,7 @@
       {active}
       {epsilon}
       width={500}
-      height={250}
+      height={200}
       slot="visualization"
     />
   </Section>
@@ -437,7 +384,7 @@
         One interesting choice for constructing a graph that captures local
         similarity is to use these <Katex math={"\\epsilon"} /> neighborhoods. If
         two points lie within each other's <Katex math={"\\epsilon"} /> neighborhoods,
-        we can connect them with an edge in the graph. We can represent this graph
+        we can connect them with an edge in the graph (Figure 5). We can represent this graph
         with an adjacency matrix <Katex math={"A"} /> where
         <Katex math={"A_{ij} = 1"} /> if points <Katex math={"i"} /> and <Katex
           math={"j"}
@@ -449,22 +396,21 @@
       {active}
       {epsilon}
       width={500}
-      height={250}
+      height={200}
       slot="visualization"
     />
   </Section>
   <Section>
     <div slot="text">
-      <h2>k-Nearest Neighbor Graphs</h2>
       <p>
         Another simple choice is to connect each point to its k-nearest
-        neighbors.
+        neighbors (Figure 6).
       </p>
       <!-- K slider -->
       <!-- <input type="range" min="1" max="10" step="1" value="5" /> -->
       <div class="slider-container">
         <label class="slider-main-label">
-          <Katex math={"k"} />
+          <Katex math={`k = ${k}`}/>
         </label>
         <div class="slider-row">
           <span class="slider-value-label">1</span>
@@ -489,7 +435,7 @@
       {active}
       {k}
       width={500}
-      height={250}
+      height={200}
       slot="visualization"
     />
   </Section>
@@ -501,7 +447,7 @@
         our data, how can we quantify a notion of distance between points? In
         the case of Isomap, the answer is exceptionally simple, we can just
         conventional algorithms like Dijkstra's to compute the shortest path
-        between points in the graph as our distance measure. We can use our
+        between points in the graph as our distance measure (Figure 7). We can use our
         k-nearest neighbor graph constructed earlier, with edges weighted by
         Euclidean distance between connected points.
       </p>
@@ -510,7 +456,7 @@
       let:active
       {active}
       width={500}
-      height={300}
+      height={200}
       slot="visualization"
     />
   </Section>
@@ -547,7 +493,7 @@
       let:active
       {active}
       width={500}
-      height={500}
+      height={400}
       slot="visualization"
     />
   </Section>

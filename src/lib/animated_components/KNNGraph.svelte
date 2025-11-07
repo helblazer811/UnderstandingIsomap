@@ -74,29 +74,6 @@
       .attr("r", radius)
       .attr("opacity", pointOpacity)
       .attr("fill", (d, i) => colorScheme(dataset.t[i]));
-      // .attr("fill", pointColor);
-    // .attr("opacity", (d, i) => (withinEpsilon[i] ? 0.8 : 0.35))
-    // .style("cursor", "pointer")
-    // .on("click", function (event, d) {
-    //   console.log("Point clicked:", d);
-    //   const idx = dataArr.indexOf(d);
-    //   if (idx !== -1) {
-    //     highlightedIdx = idx;
-    //     tempHighlightedIdx = null; // Clear temporary highlight on click
-    //     console.log("Clicked point index:", idx);
-    //   }
-    // })
-    // .on("mouseenter", function (event, d) {
-    //   const idx = dataArr.indexOf(d);
-    //   if (idx !== -1 && idx !== highlightedIdx) {
-    //     tempHighlightedIdx = idx;
-    //   }
-    // })
-    // .on("mouseleave", function (event, d) {
-    //   tempHighlightedIdx = null;
-    //   // Clean up the temporary epsilon ball group
-    //   d3.select(svgEl).selectAll("g.temp-epsilon-ball-group").remove();
-    // });
   }
 
   // Show scatter points and epsilon balls when active
@@ -126,12 +103,15 @@
   
 </script>
 
-<svg
-  bind:this={svgEl}
-  viewBox={`0 0 ${width} ${height}`}
-  preserveAspectRatio="xMidYMid meet"
-  {width}
-  {height}
-  style="display:block; width: 100%; max-width: {width}px; height: auto;"
-  style:opacity={active ? 1 : settings.inactiveOpacity}
-></svg>
+<div class="figure-wrapper">
+  <svg
+    bind:this={svgEl}
+    viewBox={`0 0 ${width} ${height}`}
+    preserveAspectRatio="xMidYMid meet"
+    {width}
+    {height}
+    style="display:block; width: 100%; max-width: {width}px; height: auto;"
+    style:opacity={active ? 1 : settings.inactiveOpacity}
+  ></svg>
+  <p class="figure-caption">Figure 6: k-Nearest Neighbor graph connecting each point to its local neighbors.</p>
+</div>

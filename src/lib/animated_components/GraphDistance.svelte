@@ -11,7 +11,7 @@
 
   let svgEl; // local reference to the <svg> element
   export let width = 500;
-  export let height = 400;
+  export let height = 250;
   export let margin = 40;
   export let k = 5;
   export let radius = 5;
@@ -324,12 +324,15 @@
   
 </script>
 
-<svg
-  bind:this={svgEl}
-  viewBox={`0 0 ${width} ${height}`}
-  preserveAspectRatio="xMidYMid meet"
-  {width}
-  {height}
-  style="display:block; width: 100%; max-width: {width}px; height: auto;"
-  style:opacity={active ? 1 : settings.inactiveOpacity}
-></svg>
+<div class="figure-wrapper">
+  <svg
+    bind:this={svgEl}
+    viewBox={`0 0 ${width} ${height}`}
+    preserveAspectRatio="xMidYMid meet"
+    {width}
+    {height}
+    style="display:block; width: 100%; max-width: {width}px; height: auto;"
+    style:opacity={active ? 1 : settings.inactiveOpacity}
+  ></svg>
+  <p class="figure-caption">Figure 7: Shortest-path traversal on the KNN graph illustrates geodesic distance.</p>
+</div>

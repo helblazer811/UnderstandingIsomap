@@ -47,12 +47,10 @@
       .attr("opacity", (d, i) => (withinEpsilon[i] ? 0.8 : 0.35))
       .style("cursor", "pointer")
       .on("click", function (event, d) {
-        console.log("Point clicked:", d);
         const idx = dataArr.indexOf(d);
         if (idx !== -1) {
           highlightedIdx = idx;
           tempHighlightedIdx = null; // Clear temporary highlight on click
-          console.log("Clicked point index:", idx);
         }
       })
       .on("mouseenter", function (event, d) {
@@ -238,12 +236,15 @@
   });
 </script>
 
-<svg
-  bind:this={svgEl}
-  viewBox={`0 0 ${width} ${height}`}
-  preserveAspectRatio="xMidYMid meet"
-  {width}
-  {height}
-  style="display:block; width: 100%; max-width: {width}px; height: auto;"
-  style:opacity={active ? 1 : settings.inactiveOpacity}
-></svg>
+<div class="figure-wrapper">
+  <svg
+    bind:this={svgEl}
+    viewBox={`0 0 ${width} ${height}`}
+    preserveAspectRatio="xMidYMid meet"
+    {width}
+    {height}
+    style="display:block; width: 100%; max-width: {width}px; height: auto;"
+    style:opacity={active ? 1 : settings.inactiveOpacity}
+  ></svg>
+  <p class="figure-caption">Figure 4: Epsilon neighborhood around a point.</p>
+</div>

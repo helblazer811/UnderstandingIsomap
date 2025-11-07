@@ -51,7 +51,7 @@
   .text-plot-section {
     display: flex; /* side-by-side layout */
     flex-direction: row;
-    width: 100%;
+    /* width: 100%; */
     /* position: relative; */
     gap: 20px; /* optional spacing between text and plot */
     align-items: center;
@@ -60,13 +60,14 @@
   .text-container {
     flex: 1; /* each takes equal horizontal space */
     width: 100%;
-    max-width: 650px;
     margin-left: 80px;
+    max-width: 650px;
   }
 
   .text-plot-section .plot {
     flex: 1; /* each takes equal horizontal space */
     height: 100%;
+    max-width: 650px;
     display: flex;
     justify-content: center; /* horizontal center */
     align-items: center; /* vertical center */
