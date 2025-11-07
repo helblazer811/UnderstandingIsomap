@@ -389,10 +389,14 @@
         this graph with an adjacency matrix <Katex math={"A"} /> where
         <Katex math={"A_{ij} = 1"} /> if points <Katex math={"i"} /> and <Katex
           math={"j"}
-        /> are connected and <Katex math={"A_{ij} = 0"} /> otherwise. This way of constructing
-        a graph relates to a deep concept in topology called <a href="https://en.wikipedia.org/wiki/Persistent_homology">persistent homology</a>, which
-        studies how the connectivity structure of data changes as we vary
-        <Katex math={"\\epsilon"} />. However, this is out of the scope of this article.
+        /> are connected and <Katex math={"A_{ij} = 0"} /> otherwise. This way of
+        constructing a graph relates to a deep concept in topology called
+        <a href="https://en.wikipedia.org/wiki/Persistent_homology"
+          >persistent homology</a
+        >, which studies how the connectivity structure of data changes as we
+        vary
+        <Katex math={"\\epsilon"} />. However, this is out of the scope of this
+        article.
       </p>
     </div>
     <EpsilonGraph
@@ -500,5 +504,15 @@
       height={500}
       slot="visualization"
     />
+  </Section>
+  <Section>
+    <div slot="text">
+      <h2>Ackwnowledgements</h2>
+      <p>
+        I would like to thank <a href="https://bhoov.com">Benjamin Hoover</a>
+        and <a href="https://hamza-elhamdadi.github.io/">Hamza Elhamdadi</a> for
+        their feedback on this article.
+      </p>
+    </div>
   </Section>
 </div>
