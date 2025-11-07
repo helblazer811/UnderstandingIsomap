@@ -70,24 +70,23 @@
         In many domains, ranging from computational imaging to finance, data
         comes in the form of high-dimensional signals that are challenging for
         humans to directly reason about, as our intuition is generally confined
-        to two or three dimensions. The field of
-        <!-- svelte-ignore a11y-invalid-attribute -->
-        <a href="">dimensionality reduction</a>
-        aims to compress high-dimensional data into lower-dimensional representations
-        that preserve their relevant structure while being much easier for people
-        to interpret.
+        to two or three dimensions. Thankfully, while data may often lay in very
+        high-dimensional spaces, it is often the case that the intrinsic
+        dimensionality of the data is much lower. This is a concept known as the
+        manifold hypothesis, and is a core assumption for many machine learning
+        techniques. The goal of dimensionality reduction is to compress
+        high-dimensional data into lower-dimensional forms that preserve their
+        relevant structure while being much easier for people to interpret.
       </p>
       <p>
-        In Figure 1 we have a classic spiral dataset, which is a one dimensional <em
-          >manifold</em
-        >
-        embedded in a two dimensional space. The
-        <span class="viridis-gradient-text">color of each point </span>
-        represents its position along this intrinsic dimension.
+        A simple dataset to start our investigation of dimensionality reduction
+        is a one dimensional spiral embedded in a two dimensional space (see
+        Figure 1).
         <em
           >How can we capture the intrinsic structure of our low dimensional
           data (1D) embedded in a higher dimensional (2D) space?</em
-        >
+        > While simple, by studying this setting, we can gain an intuition for how
+        dimensionality reduction works in much higher dimensional settings.
       </p>
     </div>
     <IntroScatter
@@ -95,7 +94,7 @@
       let:active
       {active}
       width={500}
-      height={400}
+      height={500}
       slot="visualization"
     />
   </Section>
@@ -107,10 +106,10 @@
         <a href="https://en.wikipedia.org/wiki/Isomap">Isomap</a>, a classic
         non-linear dimensionality reduction technique that seeks to create a low
         dimensional embedding of data that preserves its local similarity
-        structure. Isomap builds upon the manifold hypothesis, which posits that
-        data often lies on a low-dimensional manifold, despite existing in a
-        higher dimensional space. This is a classic assumption that is central
-        to many modern dimensionality reduction techniques like
+        structure. Isomap builds upon the manifold hypothesis, forming a graph
+        that captures the local structure of data,and projecting points in a way
+        that preserves this structure. This is a pattern that is central to many
+        modern dimensionality reduction techniques like
         <!-- svelte-ignore a11y-invalid-attribute -->
         <a
           href="https://en.wikipedia.org/wiki/T-distributed_stochastic_neighbor_embedding"
@@ -167,7 +166,9 @@
         Given this Gram matrix we can then perform an eigen decomposition
         <Katex math={"B = V \\Lambda V^T"} displayMode={true} />
         to find the top <Katex math={"p"} /> eigenvectors corresponding to the largest
-        eigenvalues. The low-dimensional coordinates <Katex
+        eigenvalues. Here <Katex math="V" /> is the matrix of all eigenvectors and
+        <Katex math={"\\Lambda"} /> is the diagonal matrix of all eigenvalues. The
+        low-dimensional coordinates <Katex
           math={"Y \\in \\mathbb{R}^{n \\times p}"}
         /> of our points are exactly given by these eigenvectors scaled by the square
         root of their corresponding eigenvalues:
@@ -191,7 +192,7 @@
       let:active
       {active}
       width={500}
-      height={400}
+      height={500}
       slot="visualization"
     />
   </Section>
@@ -332,7 +333,7 @@
       </p>
       <div class="slider-container">
         <label class="slider-main-label">
-          <Katex math={`\\epsilon = ${epsilon.toFixed(2)}`}/>
+          <Katex math={`\\epsilon = ${epsilon.toFixed(2)}`} />
         </label>
         <div class="slider-row">
           <span class="slider-value-label">0</span>
@@ -384,11 +385,14 @@
         One interesting choice for constructing a graph that captures local
         similarity is to use these <Katex math={"\\epsilon"} /> neighborhoods. If
         two points lie within each other's <Katex math={"\\epsilon"} /> neighborhoods,
-        we can connect them with an edge in the graph (Figure 5). We can represent this graph
-        with an adjacency matrix <Katex math={"A"} /> where
+        we can connect them with an edge in the graph (Figure 5). We can represent
+        this graph with an adjacency matrix <Katex math={"A"} /> where
         <Katex math={"A_{ij} = 1"} /> if points <Katex math={"i"} /> and <Katex
           math={"j"}
-        /> are connected and <Katex math={"A_{ij} = 0"} /> otherwise.
+        /> are connected and <Katex math={"A_{ij} = 0"} /> otherwise. This way of constructing
+        a graph relates to a deep concept in topology called <a href="https://en.wikipedia.org/wiki/Persistent_homology">persistent homology</a>, which
+        studies how the connectivity structure of data changes as we vary
+        <Katex math={"\\epsilon"} />. However, this is out of the scope of this article.
       </p>
     </div>
     <EpsilonGraph
@@ -410,7 +414,7 @@
       <!-- <input type="range" min="1" max="10" step="1" value="5" /> -->
       <div class="slider-container">
         <label class="slider-main-label">
-          <Katex math={`k = ${k}`}/>
+          <Katex math={`k = ${k}`} />
         </label>
         <div class="slider-row">
           <span class="slider-value-label">1</span>
@@ -447,9 +451,9 @@
         our data, how can we quantify a notion of distance between points? In
         the case of Isomap, the answer is exceptionally simple, we can just
         conventional algorithms like Dijkstra's to compute the shortest path
-        between points in the graph as our distance measure (Figure 7). We can use our
-        k-nearest neighbor graph constructed earlier, with edges weighted by
-        Euclidean distance between connected points.
+        between points in the graph as our distance measure (Figure 7). We can
+        use our k-nearest neighbor graph constructed earlier, with edges
+        weighted by Euclidean distance between connected points.
       </p>
     </div>
     <GraphDistance
@@ -493,7 +497,7 @@
       let:active
       {active}
       width={500}
-      height={400}
+      height={500}
       slot="visualization"
     />
   </Section>

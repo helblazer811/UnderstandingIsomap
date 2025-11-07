@@ -15,10 +15,16 @@
   export let epsilon = 1;
   export let numPoints = 90;
   export let graphShowDuration = 4000;
-  export let pointOpacity = 0.6;
+  export let pointOpacity = 0.15;
   export let growDuration = 2000; // ms to grow epsilon from 0 to maxEpsilon
   export let maxEpsilon = 1.5; // target epsilon radius at peak (data units)
   export let waitDuration = 1000; // ms to wait at max epsilon before plotting the graph
+  // New configurable styles for neighborhood graph edges
+  export let graphEdgeStrokeWidth = 3;
+  export let graphEdgeOpacity = 0.8;
+  // Configurable styles for epsilon balls
+  export let epsilonBallStrokeWidth = 2;
+  export let epsilonBallOpacity = 0.6;
 
   let svgEl;
   let dataset;
@@ -46,7 +52,7 @@
       .attr("opacity", pointOpacity);
   }
 
-  function plotAllEpsilonBalls(svg, dataset, radius, opacity = 0.2) {
+  function plotAllEpsilonBalls(svg, dataset, radius, opacity = epsilonBallOpacity) {
     svg.selectAll("g.all-epsilon-balls-group").remove();
     const group = svg.append("g").attr("class", "all-epsilon-balls-group");
 
@@ -60,7 +66,7 @@
         .attr("cy", cy)
         .attr("r", r)
         .attr("stroke", "#1976d2")
-        .attr("stroke-width", 2)
+        .attr("stroke-width", epsilonBallStrokeWidth)
         .attr("fill", "none")
         .attr("opacity", opacity)
         .style("pointer-events", "none");
@@ -84,8 +90,8 @@
             .attr("x2", xScale(p2.x))
             .attr("y2", yScale(p2.y))
             .attr("stroke", "#1976d2")
-            .attr("stroke-width", 2)
-            .attr("opacity", 0.8)
+            .attr("stroke-width", graphEdgeStrokeWidth)
+            .attr("opacity", graphEdgeOpacity)
             .style("pointer-events", "none");
         }
       }

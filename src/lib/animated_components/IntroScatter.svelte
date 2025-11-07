@@ -297,5 +297,8 @@
     style="display:block; width: 100%; max-width: {width}px; height: auto;"
     style:opacity={active ? 1 : settings.inactiveOpacity}
   ></svg>
-  <p class="figure-caption">Figure 1: A noisy spiral dataset illustrating a 1D manifold embedded in 2D.</p>
+  <p class="figure-caption">Figure 1: A noisy spiral dataset illustrating a 1D manifold embedded in 2D. The <span class="viridis-gradient-text"
+          >color of each point
+        </span>
+        represents its position along this intrinsic dimension.</p>
 </div>

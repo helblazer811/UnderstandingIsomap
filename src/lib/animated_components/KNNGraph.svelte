@@ -17,9 +17,9 @@
   export let colorScheme = d3.interpolateViridis;
   export let numPoints = 90;
   export const noiseLevel = 0.1;
-  export let pointOpacity = 0.6;
-  export let edgeOpacity = 0.3;
-  export let edgeWidth = 1.5;
+  export let pointOpacity = 0.15;
+  export let edgeOpacity = 0.8;
+  export let edgeWidth = 2.0;
   // export let pointColor = "#1976d2";
   export let graphColor = "#1976d2";
   let dataset = null;

@@ -6,16 +6,18 @@
   import { generateNoisySineWave } from "$lib/utils/data.js";
   import { computeDataScales } from "$lib/utils/data.js";
 
-  export let epsilon = 1;
+  export let epsilon = 2;
   export let width = 500;
   export let height = 500;
   export let margin = 40;
   export let radius = 6;
   export let active = true;
   export let colorScheme = d3.interpolateViridis;
-  export const pointOpacity = 0.9;
   export let numPoints = 90;
   export const noiseLevel = 0.1;
+  // Configurable opacities for points inside vs outside the epsilon ball
+  export let inEpsilonOpacity = 0.9;
+  export let outsideEpsilonOpacity = 0.15;
   let svgEl; // local reference to the <svg> element
 
   let dataset = null;
@@ -44,7 +46,7 @@
       .attr("cy", (d) => yScale(d.y))
       .attr("r", radius)
       .attr("fill", (d, i) => colorScale(dataset.t[i]))
-      .attr("opacity", (d, i) => (withinEpsilon[i] ? 0.8 : 0.35))
+  .attr("opacity", (d, i) => (withinEpsilon[i] ? inEpsilonOpacity : outsideEpsilonOpacity))
       .style("cursor", "pointer")
       .on("click", function (event, d) {
         const idx = dataArr.indexOf(d);

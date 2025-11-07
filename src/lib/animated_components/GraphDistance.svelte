@@ -264,7 +264,7 @@
               .attr("x2", xScale(p2.x))
               .attr("y2", yScale(p2.y))
               .attr("stroke", traversalColor)
-              .attr("stroke-width", 4)
+              .attr("stroke-width", 3)
               .attr("opacity", traversalOpacity)
               .style("pointer-events", "none");
           }

@@ -13,6 +13,7 @@
   import {
     computeIsomap,
     computeKNearestNeighborGraph,
+    connectDisconnectedComponents,
   } from "$lib/utils/math.js";
 
   export let active = false;
@@ -26,7 +27,7 @@
   export let colorScheme = d3.interpolateViridis;
   export let repeatDelay = 1500; // ms pause before repeating when active
 
-  export let k = 2;
+  export let k = 3;
   let isomapResult = null;
   let isomapCoords = null;
   let animatingProjection = false;
@@ -112,7 +113,9 @@
     const { xScale, yScale } = getScales(dataset);
     const group = svg.append("g").attr("class", "iso-knn-graph");
 
-    const adj = computeKNearestNeighborGraph(dataset.data, k);
+    // Build KNN graph, then ensure connectivity by bridging components
+    const knnAdj = computeKNearestNeighborGraph(dataset.data, k);
+    const adj = connectDisconnectedComponents(knnAdj, dataset.data);
     const edges = [];
     for (let i = 0; i < adj.length; i++) {
       for (let j = i + 1; j < adj.length; j++) {
