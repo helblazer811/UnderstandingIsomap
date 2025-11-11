@@ -21,6 +21,7 @@
   import Minimizable from "$lib/components/Minimizable.svelte";
   import EpsilonBall from "$lib/animated_components/EpsilonBall.svelte";
   import IsomapProjection from "$lib/animated_components/IsomapProjection.svelte";
+  import { data } from "$lib/stores/state";
   //   import { ScatterPlot } from "$lib/components/ScatterPlot.js";
   //   import { animateScatterToSpiral } from "$lib/animated_components/createScatter.jscatter.js";
   //   import { plotIntrinsicDimensionAxis } from "$lib/animated_components/intrinsicDimensionAxis.jsonAxis.js";
@@ -118,29 +119,56 @@
         and <!-- svelte-ignore a11y-invalid-attribute -->
         <a href="https://pair-code.github.io/understanding-umap/">UMAP</a>.
       </p>
+      <p>The Isomap algorithm has the following high level steps:</p>
+      <ol>
+        <li>
+          First, you construct a graph between points that captures the local
+          structure in the data.
+        </li>
+        <li>
+          Next, you measure the "geodesic" distances between all pairs of points
+          in this graph. These distances approximate the true manifold distances
+          between points.
+        </li>
+        <li>
+          Then you apply multi-dimensional scaling to project the high
+          dimensional data into a lower dimensional embedding that preserves the
+          distances from the graph.
+        </li>
+      </ol>
     </div>
   </Section>
   <Section>
     <div slot="text">
-      <h2>Multidimensional Scaling</h2>
+      <h2>Embedding Data with Multidimensional Scaling</h2>
       <p>
-        One of the steps in Isomap is to perform <a
-          href="https://en.wikipedia.org/wiki/Multidimensional_scaling"
-          >Multidimensional Scaling (MDS)</a
+        A critical question in dimensionality reduction is, <em
+          >how can we project data into a lower dimensional space, while
+          preserving its intrinsic structure?</em
         >
-        on a matrix of pairwise graph distances between points. MDS is a classical
-        dimensionality reduction technique that aims to take some high-dimensional
+        The purpose of dimensionality reduction is to make data easier to visualize
+        and interpret, while ensuring that insights derived from the reduced data
+        generalize to the original high-dimensional data. A key design consideration
+        then becomes how to effectively capture a property of the data that we wish to
+        preserve in the low-dimensional representation. One popular choice is to
+        preserve the pairwise distances between points. Isomap leverages a technique
+        called
+        <a href="https://en.wikipedia.org/wiki/Multidimensional_scaling"
+          >Multidimensional Scaling (MDS)</a>, that achieves this goal by taking a matrix of pairwise distances between
+        points and finding a low-dimensional embedding that best preserves these
+        distances.
+      </p>
+      <p>
+        Concretely, MDS takes some high-dimensional
         data <Katex math={"x_1, \\dots, x_n \\in \\mathbb{R}^{d}"} /> and produce
         a lower-dimensional representation <Katex
           math={"y_1, \\dots, y_n \\in \\mathbb{R}^{p}"}
-        /> where the pairwise distances between points are preserved as well as possible.
-      </p>
-      <p>
-        MDS assumes that we only have access to pairwise distances between
-        points
-        <Katex math={"d_{ij}"} /> rather than the original coordinates of the points
-        themselves. In it's simplest form, called classical MDS, we use the Euclidean
-        distance metric <Katex math={"d_{ij} = ||x_i - x_j||_2"} />. MDS then
+        /> where the pairwise distances between points are preserved as well as possible. 
+        These pairwise distances are represented by a distance matrix <Katex math={"D \\in \\mathbb{R}^{n \\times n}"} /> where
+        <Katex math={"D_{ij}"} /> corresponds to some measure of distance between points <Katex math={"x_i"} /> and <Katex math={"x_j"} />.
+        In it's simplest form, called classical MDS, we use the Euclidean
+        distance metric <Katex math={"d_{ij} = ||x_i - x_j||_2"} />. This choice of distance metric
+        has serious consequences that we will discuss in later sections. MDS then
         seeks to find points <Katex
           math={"y_1, \\dots, y_n \\in \\mathbb{R}^{p}"}
         /> such that the distances between these new points approximate the original
@@ -148,8 +176,7 @@
         <Katex math={"||y_i - y_j||_2 \\approx d_{ij}"} />.
       </p>
       <p>
-        Instead of directly operating on our pairwise distances, represented by
-        the distance matrix <Katex math={"D \\in \\mathbb{R}^{n \\times n}"} />,
+        Instead of directly operating on our pairwise distances <Katex math={"D"} />,
         classical MDS converts these distances into a set of similarity scores
         between points. This is done by double centering the squared distance
         matrix to produce a Gram matrix <Katex
@@ -163,7 +190,7 @@
         /> centers the data by subtracting the mean from each point.
       </p>
       <p>
-        Given this Gram matrix we can then perform an eigen decomposition
+        Given this Gram matrix we can then perform an eigen-decomposition
         <Katex math={"B = V \\Lambda V^T"} displayMode={true} />
         to find the top <Katex math={"p"} /> eigenvectors corresponding to the largest
         eigenvalues. Here <Katex math="V" /> is the matrix of all eigenvectors and
@@ -184,7 +211,8 @@
         <!-- svelte-ignore a11y-invalid-attribute -->
         <a href="https://en.wikipedia.org/wiki/Principal_component_analysis"
           >Principal Component Analysis (PCA)</a
-        >.
+        >. Foreshadowing future sections, this equivalence highlights some of the 
+        limitations of applying MDS with a Euclidean distance metric.
       </p>
     </div>
     <MDSPlot
@@ -279,11 +307,12 @@
   <!-- <PCAScatter {dataset} /> -->
   <Section>
     <div slot="text">
-      <h2>Limitations of MDS with Euclidean Distance</h2>
+      <h2>Limitations of Classical MDS with Euclidean Distance</h2>
       <p>
+        Unfortunately, naively applying classical MDS with Euclidean distance as the 
+        measure of distance between our points only works for data that has linear structure. 
         We can see in Figure 2 that when using Euclidean distance as our metric
-        for
-        <Katex math={"d_{ij}"} />, MDS amounts to projecting data onto the first
+        for <Katex math={"d_{ij}"} />, MDS amounts to projecting data onto the first
         <Katex math={"k"} /> principal components. While this is a powerful technique
         for many types of data, for our spiral dataset it fails to capture the intrinsic
         structure of the data because it is restricted to linear axes in the original
@@ -299,8 +328,8 @@
         That is, while Euclidean distance may not be a good measure of similarity
         between points that are far apart, it works reasonably well for points that
         are close together (Figure 3)! The closest points to a given point in Euclidean
-        distance are indeed nearby along the spiral, however points that are a medium
-        Euclidean distance away may be very far apart along the spiral.
+        distance are indeed close on the intrinsic data axis (represened by color), however points that are a medium
+        Euclidean distance away may be very far apart along the intrinsic axis.
       </p>
     </div>
     <EuclideanPairwiseDistances
@@ -313,11 +342,11 @@
   </Section>
   <Section>
     <div slot="text">
-      <h2>Epsilon Neighborhoods</h2>
+      <h2>Capturing Local Similarity Structure with Epsilon Neighborhoods</h2>
       <p>
         One way to formalize the idea of locality is through neighborhoods. You
-        can draw a circle (hypersphere) around a point (called an epsilon
-        neighborhood). That is the region about a point <Katex math={"x_i"} /> defined
+        can draw a circle (hypersphere) around a point, which we can call an epsilon
+        neighborhood. That is the region about a point <Katex math={"x_i"} /> defined
         as
         <Katex
           math={"N_\\epsilon(x_i) = \\{ x_j : ||x_i - x_j||_2 < \\epsilon \\}"}
@@ -326,10 +355,10 @@
         for some small value of <Katex math={"\\epsilon"} />. See a depiction of
         this in Figure 4. Look and notice that the points that fall within this
         circle when <Katex math={"\\epsilon"} /> is small are also close to the point
-        along the spiral's intrinsic dimension. However, if we increase <Katex
+        along the data's intrinsic dimension. However, if we increase <Katex
           math={"\\epsilon"}
-        />, we start to include points that are nearby in Euclidean distance but
-        far apart along the spiral.
+        />, we start to include points that may be nearby in Euclidean distance but
+        far apart along the intrinsic axis (denoted by color) of the data. 
       </p>
       <div class="slider-container">
         <label class="slider-main-label">
@@ -360,7 +389,7 @@
   </Section>
   <Section>
     <div slot="text">
-      <h2>Building a Graph from Local Neighborhoods</h2>
+      <h2>Capturing a the Structure of Data With a Graph</h2>
       <Quote>
         How can we embed data that is locally Euclidean but globally
         non-Euclidean?
@@ -371,7 +400,7 @@
         dimensionality reduction technique? A powerful perspective in many
         dimensionality reduction techniques is to represent data as a graph,
         where the connections between points in our dataset capture their local
-        similarity structure. This is central to many more powerful
+        similarity structure. This is central not just to Isomap, but to many powerful
         dimensionality reduction techniques like
         <!-- svelte-ignore a11y-invalid-attribute -->
         <a
@@ -403,8 +432,8 @@
       let:active
       {active}
       {epsilon}
-      width={500}
-      height={200}
+      width={400}
+      height={240}
       slot="visualization"
     />
   </Section>
@@ -412,7 +441,7 @@
     <div slot="text">
       <p>
         Another simple choice is to connect each point to its k-nearest
-        neighbors (Figure 6).
+        neighbors (Figure 6). This is a construction known as a K-Nearest Neighbor graph. 
       </p>
       <!-- K slider -->
       <!-- <input type="range" min="1" max="10" step="1" value="5" /> -->
@@ -443,13 +472,12 @@
       {active}
       {k}
       width={500}
-      height={200}
+      height={160}
       slot="visualization"
     />
   </Section>
   <Section>
     <div slot="text">
-      <h2>Measuring Distance in a Graph</h2>
       <p>
         Now that we have a graph that captures the local similarity structure of
         our data, how can we quantify a notion of distance between points? In
@@ -464,7 +492,7 @@
       let:active
       {active}
       width={500}
-      height={200}
+      height={160}
       slot="visualization"
     />
   </Section>
@@ -495,6 +523,27 @@
           /> to obtain low-dimensional coordinates that preserve these distances.
         </li>
       </ol>
+      <p>
+        This procedure gives us a low-dimensional embedding that respects the local 
+        similarity structure of our data, allowing us to visualize the relationships between points
+        in a way that is faithful to their intrinsic geometry. 
+      </p>
+      <h2>Limitations</h2>
+      <p>
+        It is worth noting that this algorithm has numerous limitations, which has motivated 
+        many of the more modern dimensionality reduction techniques like t-SNE and UMAP.
+        For one, the choice of k in the k-nearest neighbor graph can have a significant impact
+        on the resulting embedding. Additionally, MDS can be computationally expensive for large datasets. 
+        Third, Isomap assumes that the data lies on a single connected manifold, which may not hold in practice.
+      </p>
+      <h2>Acknowledgements</h2>
+      <p>
+        I would like to thank <a href="https://bhoov.com">Benjamin Hoover</a>,
+        <a href="https://hamza-elhamdadi.github.io/">Hamza Elhamdadi</a>,
+        <a href="https://poloclub.github.io/">Polo Chau</a>, and
+        <a href="https://the-vivek.netlify.app/"> Vivek Anand</a> for their helpful
+        feedback on this article.
+      </p>
     </div>
     <IsomapProjection
       {dataset}
@@ -504,15 +553,5 @@
       height={500}
       slot="visualization"
     />
-  </Section>
-  <Section>
-    <div slot="text">
-      <h2>Ackwnowledgements</h2>
-      <p>
-        I would like to thank <a href="https://bhoov.com">Benjamin Hoover</a>
-        and <a href="https://hamza-elhamdadi.github.io/">Hamza Elhamdadi</a> for
-        their feedback on this article.
-      </p>
-    </div>
   </Section>
 </div>

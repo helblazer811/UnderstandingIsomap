@@ -4,7 +4,7 @@
   import { onMount } from "svelte";
   import * as settings from "$lib/settings.js";
   import { generateNoisySineWave, computeDataScales } from "$lib/utils/data.js";
-  import { computeEpsilonNeighborhoodGraph } from "$lib/utils/math.js";
+  import { plotScatter as plotScatterUtility } from "$lib/utils/plotting.js";
 
   export let width = 500;
   export let height = 300;
@@ -13,11 +13,11 @@
   export let active = true;
   export let colorScheme = d3.interpolateViridis;
   export let epsilon = 1;
-  export let numPoints = 90;
+  export let numPoints = 50;
   export let graphShowDuration = 4000;
   export let pointOpacity = 0.15;
   export let growDuration = 2000; // ms to grow epsilon from 0 to maxEpsilon
-  export let maxEpsilon = 1.5; // target epsilon radius at peak (data units)
+  // export let maxEpsilon = 1.1; // target epsilon radius at peak (data units)
   export let waitDuration = 1000; // ms to wait at max epsilon before plotting the graph
   // New configurable styles for neighborhood graph edges
   export let graphEdgeStrokeWidth = 3;
@@ -35,21 +35,16 @@
   // -------------------------------
   // Drawing functions
   // -------------------------------
-  function plotScatter(svg, dataset, xScale, yScale) {
-    svg.selectAll("g.scatter-group").remove();
-    const group = svg.append("g").attr("class", "scatter-group");
-
+  function drawScatter(svg, dataset, xScale, yScale) {
     const colorScale = d3.scaleSequential(colorScheme).domain([0, 1]);
-
-    group
-      .selectAll("circle")
-      .data(dataset.data)
-      .join("circle")
-      .attr("cx", (d) => xScale(d.x))
-      .attr("cy", (d) => yScale(d.y))
-      .attr("r", radius)
-      .attr("fill", (d, i) => colorScale(dataset.t[i]))
-      .attr("opacity", pointOpacity);
+    plotScatterUtility(svg, dataset, { xScale, yScale }, {
+      radius,
+      fillColor: (d, i) => colorScale(dataset.t[i]),
+      opacity: dataset.data.map(() => pointOpacity),
+      pointClass: "scatter-point",
+      groupClass: "scatter-group",
+      clearPrevious: true
+    });
   }
 
   function plotAllEpsilonBalls(svg, dataset, radius, opacity = epsilonBallOpacity) {
@@ -73,11 +68,48 @@
     });
   }
 
+  /**
+   * Compute epsilon neighborhood graph using screen-space distances (consistent with EpsilonBall)
+   * Returns an adjacency matrix where adjMatrix[i][j] === 1 if points i and j are within epsilon distance
+   */
+  function computeEpsilonNeighborhoodGraphScreenSpace(dataset, epsilon) {
+    const dataArr = dataset.data;
+    const n = dataArr.length;
+    const adjMatrix = Array(n).fill(null).map(() => Array(n).fill(0));
+
+    // Convert epsilon from data space to screen space
+    const epsilonScreen = Math.abs(xScale(epsilon) - xScale(0));
+
+    for (let i = 0; i < n; i++) {
+      const p1 = dataArr[i];
+      const p1xScreen = xScale(p1.x);
+      const p1yScreen = yScale(p1.y);
+
+      for (let j = i + 1; j < n; j++) {
+        const p2 = dataArr[j];
+        const p2xScreen = xScale(p2.x);
+        const p2yScreen = yScale(p2.y);
+
+        // Compute Euclidean distance in screen space
+        const distScreen = Math.sqrt(
+          (p2xScreen - p1xScreen) ** 2 + (p2yScreen - p1yScreen) ** 2
+        );
+
+        // Mark as connected if within epsilon distance
+        if (distScreen <= epsilonScreen) {
+          adjMatrix[i][j] = 1;
+          adjMatrix[j][i] = 1;
+        }
+      }
+    }
+    return adjMatrix;
+  }
+
   function plotEpsilonNeighborhoodGraph(svg, dataset, epsilon) {
     svg.selectAll("g.neighborhood-graph-group").remove();
     const group = svg.append("g").attr("class", "neighborhood-graph-group");
 
-    const adjMatrix = computeEpsilonNeighborhoodGraph(dataset.data, epsilon);
+    const adjMatrix = computeEpsilonNeighborhoodGraphScreenSpace(dataset, epsilon);
     for (let i = 0; i < dataset.data.length; i++) {
       for (let j = i + 1; j < dataset.data.length; j++) {
         if (adjMatrix[i][j] === 1) {
@@ -102,24 +134,25 @@
   // Animation
   // -------------------------------
   async function animateCycle() {
+    // Compute radius
     while (active) {
       // Grow and fade epsilon balls
       await new Promise((resolve) => {
         const start = performance.now();
+        const svg = d3.select(svgEl);
 
         function animate(now) {
           const elapsed = now - start;
           if (elapsed < growDuration) {
             const t = elapsed / growDuration;
-            animatedEpsilonRadius = t * maxEpsilon;
+            animatedEpsilonRadius = t * epsilon;
 
             // Plot directly here instead of reactive block
-            const svg = d3.select(svgEl);
             plotAllEpsilonBalls(svg, dataset, animatedEpsilonRadius);
 
             requestAnimationFrame(animate);
           } else {
-            animatedEpsilonRadius = maxEpsilon;
+            animatedEpsilonRadius = epsilon;
 
             // Final frame
             const svg = d3.select(svgEl);
@@ -159,19 +192,19 @@
   // Plot scatter initially
   $: if (dataset && active) {
     const svg = d3.select(svgEl);
-    plotScatter(svg, dataset, xScale, yScale);
+    drawScatter(svg, dataset, xScale, yScale);
     // Trigger animation
     animateCycle();
   }
 
   onMount(() => {
-    dataset = generateNoisySineWave(numPoints, 0.01, 10, 1.5, [0, 15], 4);
+    dataset = generateNoisySineWave(numPoints, 0.01, 10, 1.5, [0, 10], 4);
     const scales = computeDataScales(dataset, width, height, margin);
     xScale = scales.xScale;
     yScale = scales.yScale;
-    // Also plot satter on mount
+    // Also plot scatter on mount
     const svg = d3.select(svgEl);
-    plotScatter(svg, dataset, xScale, yScale);
+    drawScatter(svg, dataset, xScale, yScale);
   });
 </script>
 

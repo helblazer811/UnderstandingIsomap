@@ -9,6 +9,7 @@
     projectOntoFirstPrincipalComponent,
     convertObjectDataFormatToArray,
   } from "$lib/utils/math.js";
+  import { plotScatter as plotScatterUtility } from "$lib/utils/plotting.js";
 
   import ActionLink from "$lib/components/ActionLink.svelte";
   import Katex from "$lib/components/Katex.svelte";
@@ -38,9 +39,9 @@
 
   let svgEl; // reference to the <svg> element
 
-  // Plots the PCA scatter points without animation.
+  // Plots the scatter points without animation.
   // @param {object} dataset - { data: [{x, y}], t: [number] }
-  function plotScatter(svg, dataset) {
+  function drawScatter(svg, dataset) {
     if (!dataset || !dataset.data) return;
 
     // Compute scales
@@ -63,22 +64,14 @@
 
     const colorScale = d3.scaleSequential(colorScheme).domain([0, 1]);
 
-    // Remove previous scatter sub-container if any
-    svg.selectAll("g.scatter-sub-container").remove();
-
-    // Create a group for scatter points
-    const scatterGroup = svg.append("g").attr("class", "scatter-sub-container");
-
-    scatterGroup
-      .selectAll("circle")
-      .data(dataset.data)
-      .enter()
-      .append("circle")
-      .attr("cx", (d) => xScale(d.x))
-      .attr("cy", (d) => yScale(d.y))
-      .attr("r", radius)
-      .attr("fill", (d, i) => colorScale(dataset.t[i]))
-      .attr("opacity", pointOpacity);
+    plotScatterUtility(svg, dataset, { xScale, yScale }, {
+      radius,
+      fillColor: (d, i) => colorScale(dataset.t[i]),
+      opacity: dataset.data.map(() => pointOpacity),
+      pointClass: "scatter-point",
+      groupClass: "scatter-group",
+      clearPrevious: true
+    });
   }
 
   /**
@@ -264,7 +257,7 @@
     const axisY = yScale(mean[1]);
     // 2. Animate points linearly from original positions to final positions
     svg
-      .selectAll("g.scatter-sub-container circle")
+      .selectAll("g.scatter-group circle")
       .data(nodes)
       .transition()
       .duration(1500)
@@ -291,7 +284,7 @@
       });
 
     svg
-      .selectAll("g.scatter-sub-container circle")
+      .selectAll("g.scatter-group circle")
       .transition()
       .duration(pcaAnimation.step5)
       .attrTween("transform", function () {
@@ -304,7 +297,7 @@
   // Optional: re-plot if dataset changes
   $: if (dataset && svgEl) {
     const svg = d3.select(svgEl);
-    plotScatter(svg, dataset);
+    drawScatter(svg, dataset);
   }
 
 //   $: if (active && svgEl && showIntrinsicDimension) {

@@ -15,6 +15,8 @@
     computeKNearestNeighborGraph,
     connectDisconnectedComponents,
   } from "$lib/utils/math.js";
+  import { plotScatter as plotScatterUtility } from "$lib/utils/plotting.js";
+  import { draw } from "svelte/transition";
 
   export let active = false;
   let svgEl; // local reference to the <svg> element
@@ -27,7 +29,7 @@
   export let colorScheme = d3.interpolateViridis;
   export let repeatDelay = 1500; // ms pause before repeating when active
 
-  export let k = 3;
+  let k = 3;
   let isomapResult = null;
   let isomapCoords = null;
   let animatingProjection = false;
@@ -49,7 +51,7 @@
 
   // Plots the scatter points without animation.
   // @param {object} dataset - { data: [{x, y}], t: [number] }
-  function plotScatter(svg, dataset) {
+  function drawScatter(svg, dataset) {
     if (!dataset || !dataset.data) return;
 
     // Compute scales
@@ -72,22 +74,14 @@
 
     const colorScale = d3.scaleSequential(colorScheme).domain([0, 1]);
 
-    // Remove previous scatter sub-container if any
-    svg.selectAll("g.scatter-sub-container").remove();
-
-    // Create a group for scatter points
-    const scatterGroup = svg.append("g").attr("class", "scatter-sub-container");
-
-    scatterGroup
-      .selectAll("circle")
-      .data(dataset.data)
-      .enter()
-      .append("circle")
-      .attr("cx", (d) => xScale(d.x))
-      .attr("cy", (d) => yScale(d.y))
-      .attr("r", radius)
-      .attr("fill", (d, i) => colorScale(dataset.t[i]))
-      .attr("opacity", pointOpacity);
+    plotScatterUtility(svg, dataset, { xScale, yScale }, {
+      radius,
+      fillColor: (d, i) => colorScale(dataset.t[i]),
+      opacity: dataset.data.map(() => pointOpacity),
+      pointClass: "scatter-point",
+      groupClass: "scatter-group",
+      clearPrevious: true
+    });
   }
 
   function getScales(dataset) {
@@ -145,7 +139,7 @@
     if (cycleRunning) return;
     cycleRunning = true;
     // Start from original scatter
-    plotScatter(svg, dataset);
+    drawScatter(svg, dataset);
     // Wait before revealing graph
     await new Promise((resolve) => setTimeout(resolve, preGraphDelay));
     // Show KNN graph (stays during projection)
@@ -162,7 +156,7 @@
     // Clean overlays
     svg.selectAll("g.iso-knn-graph").remove();
     // Draw scatter fresh to ensure clean base
-    plotScatter(svg, dataset);
+    drawScatter(svg, dataset);
     plotKNNGraphAllAtOnce(svg, dataset, k);
     // Small settle time (0ms) so browser paints, then hold
     await new Promise((resolve) => requestAnimationFrame(() => resolve()));
@@ -225,7 +219,7 @@
 
     // Animate points from original to Isomap coordinates
     const sel = svg
-      .selectAll("g.scatter-sub-container circle")
+      .selectAll("g.scatter-group circle")
       .data(
         dataset.data.map((d, i) => ({
           x: isoXScale(isomapCoords[i][0]),
@@ -284,7 +278,7 @@
 
   $: if (dataset && svgEl) {
     const svg = d3.select(svgEl);
-    plotScatter(svg, dataset);
+    drawScatter(svg, dataset);
   }
 
   // Optional: start cycle when active

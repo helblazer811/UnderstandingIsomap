@@ -1,6 +1,6 @@
 import * as d3 from "d3";
 // Data settings
-export const numPoints = 300;
+export const numPoints = 270;
 export const numTurns = 3;
 export const noiseStd = 0.2;
 export const squashFactor = 0.5;

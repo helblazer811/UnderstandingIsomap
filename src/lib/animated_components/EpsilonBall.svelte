@@ -5,15 +5,16 @@
   import { onMount } from "svelte";
   import { generateNoisySineWave } from "$lib/utils/data.js";
   import { computeDataScales } from "$lib/utils/data.js";
+  import { plotScatter as plotScatterUtility } from "$lib/utils/plotting.js";
 
   export let epsilon = 2;
   export let width = 500;
   export let height = 500;
-  export let margin = 40;
+  export let margin = 20;
   export let radius = 6;
   export let active = true;
   export let colorScheme = d3.interpolateViridis;
-  export let numPoints = 90;
+  export let numPoints = 50;
   export const noiseLevel = 0.1;
   // Configurable opacities for points inside vs outside the epsilon ball
   export let inEpsilonOpacity = 0.9;
@@ -28,25 +29,28 @@
   let currentOpacity = 1.0;
 
   // Draw scatter points with t-based Viridis color and click-to-highlight
-  function plotScatter(svg, dataset, xScale, yScale, radius, withinEpsilon) {
-    svg.selectAll("g.scatter-group").remove();
+  function drawScatter(svg, dataset, xScale, yScale, radius, withinEpsilon) {
     const dataArr = dataset.data;
-    const scatterGroup = svg.append("g").attr("class", "scatter-group");
     const colorScale = d3.scaleSequential(colorScheme).domain([0, 1]);
     if (!withinEpsilon) {
       withinEpsilon = new Array(dataArr.length).fill(false);
     }
-    scatterGroup
-      .selectAll("circle.scatter-point")
-      .data(dataArr)
-      .enter()
-      .append("circle")
-      .attr("class", "scatter-point")
-      .attr("cx", (d) => xScale(d.x))
-      .attr("cy", (d) => yScale(d.y))
-      .attr("r", radius)
-      .attr("fill", (d, i) => colorScale(dataset.t[i]))
-  .attr("opacity", (d, i) => (withinEpsilon[i] ? inEpsilonOpacity : outsideEpsilonOpacity))
+
+    const opacityArray = withinEpsilon.map((inside) =>
+      inside ? inEpsilonOpacity : outsideEpsilonOpacity
+    );
+
+    plotScatterUtility(svg, dataset, { xScale, yScale }, {
+      radius,
+      fillColor: (d, i) => colorScale(dataset.t[i]),
+      opacity: opacityArray,
+      pointClass: "scatter-point",
+      groupClass: "scatter-group",
+      clearPrevious: true
+    });
+
+    // Add interactivity after plotting
+    svg.selectAll("circle.scatter-point")
       .style("cursor", "pointer")
       .on("click", function (event, d) {
         const idx = dataArr.indexOf(d);
@@ -158,12 +162,26 @@
       .text("ε");
   }
 
-  // Show scatter points and epsilon balls when active
-  $: if (active && dataset && svgEl) {
+  // // Show scatter points and epsilon balls when active
+  // $: if (active && dataset && svgEl) {
+  //   const svg = d3.select(svgEl);
+  //   // Compute scales and color
+  //   const dataArr = dataset.data;
+  //   // Use highlightWithinEpsilonPoints for dot highlighting
+  //   let withinEpsilon;
+  //   withinEpsilon = highlightWithinEpsilonPoints(
+  //     dataset,
+  //     highlightedIdx,
+  //     epsilon,
+  //     xScale,
+  //     yScale
+  //   );
+
+  //   plotScatter(svg, dataset, xScale, yScale, radius, withinEpsilon);
+  // }
+
+  $: if (active && dataset && svgEl && epsilon !== null) {
     const svg = d3.select(svgEl);
-    // Compute scales and color
-    const dataArr = dataset.data;
-    // Use highlightWithinEpsilonPoints for dot highlighting
     let withinEpsilon;
     withinEpsilon = highlightWithinEpsilonPoints(
       dataset,
@@ -172,12 +190,8 @@
       xScale,
       yScale
     );
-
-    plotScatter(svg, dataset, xScale, yScale, radius, withinEpsilon);
-  }
-
-  $: if (active && dataset && svgEl) {
-    const svg = d3.select(svgEl);
+    // Replot the scatter with updated within-epsilon highlighting
+    drawScatter(svg, dataset, xScale, yScale, radius, withinEpsilon);
     // Always show the permanent highlight if it exists
     if (highlightedIdx !== null) {
       plotEpsilonBall(
@@ -206,7 +220,7 @@
 
   onMount(() => {
     // Sample sine wave dataset
-    dataset = generateNoisySineWave(numPoints, 0.01, 10, 1.5, [0, 15], 4);
+    dataset = generateNoisySineWave(numPoints, 0.01, 10, 1.5, [0, 10], 4);
     // Compute scales
     if (dataset) {
       const scales = computeDataScales(dataset, width, height, margin);
@@ -232,9 +246,18 @@
       }
       highlightedIdx = minIdx;
     }
+    // Compute within epsilon points
+    let withinEpsilon;
+    withinEpsilon = highlightWithinEpsilonPoints(
+      dataset,
+      highlightedIdx,
+      epsilon,
+      xScale,
+      yScale
+    );
     // Also plot scatter at first
     const svg = d3.select(svgEl);
-    plotScatter(svg, dataset, xScale, yScale, radius);
+    drawScatter(svg, dataset, xScale, yScale, radius, withinEpsilon);
   });
 </script>
 
@@ -248,5 +271,9 @@
     style="display:block; width: 100%; max-width: {width}px; height: auto;"
     style:opacity={active ? 1 : settings.inactiveOpacity}
   ></svg>
-  <p class="figure-caption">Figure 4: Epsilon neighborhood around a point.</p>
+  <p class="figure-caption">
+    Figure 4: The highlighted circle shoes the epsilon neighborhood around a
+    point. You can hover over or select another point to see its epsilon ball.
+    Manipulate the slider for epsilon to see its impact on the ball.
+  </p>
 </div>

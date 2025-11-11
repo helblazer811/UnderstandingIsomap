@@ -16,6 +16,7 @@
     projectOntoFirstPrincipalComponent,
     convertObjectDataFormatToArray,
   } from "$lib/utils/math.js";
+  import { plotScatter } from "$lib/utils/plotting.js";
 
   export let active = false;
   let svgEl; // local reference to the <svg> element
@@ -45,7 +46,7 @@
 
   // Plots the scatter points without animation.
   // @param {object} dataset - { data: [{x, y}], t: [number] }
-  function plotScatter(svg, dataset) {
+  function drawScatter(svg, dataset) {
     if (!dataset || !dataset.data) return;
 
     // Compute scales
@@ -68,22 +69,14 @@
 
     const colorScale = d3.scaleSequential(colorScheme).domain([0, 1]);
 
-    // Remove previous scatter sub-container if any
-    svg.selectAll("g.scatter-sub-container").remove();
-
-    // Create a group for scatter points
-    const scatterGroup = svg.append("g").attr("class", "scatter-sub-container");
-
-    scatterGroup
-      .selectAll("circle")
-      .data(dataset.data)
-      .enter()
-      .append("circle")
-      .attr("cx", (d) => xScale(d.x))
-      .attr("cy", (d) => yScale(d.y))
-      .attr("r", radius)
-      .attr("fill", (d, i) => colorScale(dataset.t[i]))
-      .attr("opacity", pointOpacity);
+    plotScatter(svg, dataset, { xScale, yScale }, {
+      radius,
+      fillColor: (d, i) => colorScale(dataset.t[i]),
+      opacity: dataset.data.map(() => pointOpacity),
+      pointClass: "scatter-point",
+      groupClass: "scatter-group",
+      clearPrevious: true
+    });
   }
 
   /**
@@ -171,7 +164,7 @@
     // Remove intrinsic dimension axis if any
     svg.selectAll("g.intrinsic-dimension-axis").remove();
     // Revert back to original scatter before animating
-    plotScatter(svg, dataset);
+    drawScatter(svg, dataset);
     // Find the first principal component
     const firstPrincipalComponent = pcaResult.components[0];
     const pc1Norm = math.divide(
@@ -273,7 +266,7 @@
     const axisY = yScale(mean[1]);
     // 2. Animate points linearly from original positions to final positions
     svg
-      .selectAll("g.scatter-sub-container circle")
+      .selectAll("g.scatter-group circle")
       .data(nodes)
       .transition()
       .duration(1500)
@@ -303,7 +296,7 @@
     remainingCircleRotations = dataset.data.length;
 
     svg
-      .selectAll("g.scatter-sub-container circle")
+      .selectAll("g.scatter-group circle")
       .transition()
       .duration(projectionAnimation.step5)
       .attrTween("transform", function () {
@@ -335,7 +328,7 @@
 
   $: if (dataset && svgEl) {
     const svg = d3.select(svgEl);
-    plotScatter(svg, dataset);
+    drawScatter(svg, dataset);
   }
 
   // Optional: re-plot if dataset changes

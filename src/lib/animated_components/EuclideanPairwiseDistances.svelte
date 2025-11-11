@@ -4,6 +4,7 @@
   import * as settings from "$lib/settings.js";
   import { onMount } from "svelte";
   import { generateNoisySineWave } from "$lib/utils/data.js";
+  import { plotScatter } from "$lib/utils/plotting.js";
 
   let svgEl;
   export let width = 500;
@@ -48,30 +49,30 @@
   }
 
   // Draw scatter points with constant blue color and click-to-highlight
-  function plotScatter(svg, dataset, xScale, yScale, radius, withinEpsilon) {
-    svg.selectAll("g.scatter-group").remove();
+  function drawScatter(svg, dataset, xScale, yScale, radius, withinEpsilon) {
     const dataArr = dataset.data;
-    const scatterGroup = svg.append("g").attr("class", "scatter-group");
-    scatterGroup
-      .selectAll("circle.scatter-point")
-      .data(dataArr)
-      .enter()
-      .append("circle")
-      .attr("class", "scatter-point")
-      .attr("cx", (d) => xScale(d.x))
-      .attr("cy", (d) => yScale(d.y))
-      .attr("r", radius)
-      .attr("fill", graphColor)
-      .attr("opacity", (d, i) =>
-        withinEpsilon[i] ? pointOpacity * 2 : pointOpacity
-      )
+    const opacityArray = dataArr.map((d, i) =>
+      withinEpsilon[i] ? pointOpacity * 2 : pointOpacity
+    );
+
+    plotScatter(svg, dataset, { xScale, yScale }, {
+      radius,
+      fillColor: graphColor,
+      opacity: opacityArray,
+      pointClass: "scatter-point",
+      groupClass: "scatter-group",
+      clearPrevious: true
+    });
+
+    // Add interactivity after plotting
+    const dataArr2 = dataset.data;
+    svg.selectAll("circle.scatter-point")
       .style("cursor", "pointer")
       .on("mouseenter", function (event, d) {
-        const idx = dataArr.indexOf(d);
+        const idx = dataArr2.indexOf(d);
         if (idx !== -1 && idx !== highlightedIdx) {
-          //   tempHighlightedIdx = idx;
           currentAnimationId += 1;
-          highlightedIdx = idx; // This will trigger the animation
+          highlightedIdx = idx;
         }
       });
   }
@@ -178,7 +179,7 @@
     highlightedIdx = Math.floor(Math.random() * dataset.data.length);
 
     const svg = d3.select(svgEl);
-    plotScatter(svg, dataset, xScale, yScale, radius, []);
+    drawScatter(svg, dataset, xScale, yScale, radius, []);
   });
   
 </script>

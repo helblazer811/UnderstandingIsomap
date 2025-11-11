@@ -4,6 +4,8 @@
   import * as settings from "$lib/settings.js";
 
   import { generateNoiseFreeSpiralPoints } from "$lib/utils/data.js";
+  import { plotScatter } from "$lib/utils/plotting.js";
+  import { onMount } from "svelte";
 
   export let dataset;
   export let active = true;
@@ -82,9 +84,9 @@
       });
   }
 
-  // Plots the PCA scatter points without animation.
+  // Plots the scatter points without animation.
   // @param {object} dataset - { data: [{x, y}], t: [number] }
-  function plotScatter(svg, dataset) {
+  function drawScatter(svg, dataset) {
     if (!dataset || !dataset.data) return;
 
     // Compute scales
@@ -107,22 +109,14 @@
 
     const colorScale = d3.scaleSequential(colorScheme).domain([0, 1]);
 
-    // Remove previous scatter sub-container if any
-    svg.selectAll("g.scatter-sub-container").remove();
-
-    // Create a group for scatter points
-    const scatterGroup = svg.append("g").attr("class", "scatter-sub-container");
-
-    scatterGroup
-      .selectAll("circle")
-      .data(dataset.data)
-      .enter()
-      .append("circle")
-      .attr("cx", (d) => xScale(d.x))
-      .attr("cy", (d) => yScale(d.y))
-      .attr("r", radius)
-      .attr("fill", (d, i) => colorScale(dataset.t[i]))
-      .attr("opacity", pointOpacity);
+    plotScatter(svg, dataset, { xScale, yScale }, {
+      radius,
+      fillColor: (d, i) => colorScale(dataset.t[i]),
+      opacity: dataset.data.map(() => pointOpacity),
+      pointClass: "scatter-point",
+      groupClass: "scatter-group",
+      clearPrevious: true
+    });
   }
 
   /**
@@ -262,11 +256,6 @@
       .text("Latent 1D Manifold");
   }
 
-  $: if (dataset && svgEl) {
-    const svg = d3.select(svgEl);
-    plotScatter(svg, dataset);
-  }
-
   async function runAxisLoop() {
     if (isAnimating) return; // prevent overlapping loops
     isAnimating = true;
@@ -279,12 +268,17 @@
     isAnimating = false;
   }
 
+  $: if (dataset && svgEl) {
+    const svg = d3.select(svgEl);
+    drawScatter(svg, dataset);
+  }
+
   // Start or resume the loop when conditions are met
   $: if (active && dataset && svgEl) {
     const svg = d3.select(svgEl);
-    plotScatter(svg, dataset);
     runAxisLoop();
   }
+
 </script>
 
 <div class="figure-wrapper">
@@ -297,8 +291,9 @@
     style="display:block; width: 100%; max-width: {width}px; height: auto;"
     style:opacity={active ? 1 : settings.inactiveOpacity}
   ></svg>
-  <p class="figure-caption">Figure 1: A noisy spiral dataset illustrating a 1D manifold embedded in 2D. The <span class="viridis-gradient-text"
-          >color of each point
-        </span>
-        represents its position along this intrinsic dimension.</p>
+  <p class="figure-caption">
+    Figure 1: A noisy spiral dataset illustrating a 1D manifold embedded in 2D.
+    The <span class="viridis-gradient-text">color of each point&nbsp;</span> represents
+    its position along this intrinsic dimension.
+  </p>
 </div>

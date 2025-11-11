@@ -5,17 +5,18 @@
   import { computeKNearestNeighborGraph } from "$lib/utils/math.js";
   import { generateNoisySineWave } from "$lib/utils/data.js";
   import { computeDataScales } from "$lib/utils/data.js";
+  import { plotScatter as plotScatterUtility } from "$lib/utils/plotting.js";
   import { onMount } from "svelte";
 
   let svgEl; // local reference to the <svg> element
   export let k;
   export let width = 500;
   export let height = 300;
-  export let margin = 40;
+  export let margin = 0;
   export let radius = 6;
   export let active = true;
   export let colorScheme = d3.interpolateViridis;
-  export let numPoints = 90;
+  export let numPoints = 300;
   export const noiseLevel = 0.1;
   export let pointOpacity = 0.15;
   export let edgeOpacity = 0.8;
@@ -58,22 +59,17 @@
       }
     }
   }
-  // Draw scatter points with t-based Viridis color and click-to-highlight
-  function plotScatter(svg, dataset, radius) {
-    svg.selectAll("g.scatter-group").remove();
-    const dataArr = dataset.data;
-    const scatterGroup = svg.append("g").attr("class", "scatter-group");
-    scatterGroup
-      .selectAll("circle.scatter-point")
-      .data(dataArr)
-      .enter()
-      .append("circle")
-      .attr("class", "scatter-point")
-      .attr("cx", (d) => xScale(d.x))
-      .attr("cy", (d) => yScale(d.y))
-      .attr("r", radius)
-      .attr("opacity", pointOpacity)
-      .attr("fill", (d, i) => colorScheme(dataset.t[i]));
+  // Draw scatter points with t-based Viridis color
+  function drawScatter(svg, dataset, radius) {
+    const colorScale = d3.scaleSequential(colorScheme).domain([0, 1]);
+    plotScatterUtility(svg, dataset, { xScale, yScale }, {
+      radius,
+      fillColor: (d, i) => colorScale(dataset.t[i]),
+      opacity: dataset.data.map(() => pointOpacity),
+      pointClass: "scatter-point",
+      groupClass: "scatter-group",
+      clearPrevious: true
+    });
   }
 
   // Show scatter points and epsilon balls when active
@@ -83,7 +79,7 @@
     // const dataArr = dataset.data;
     // const colorScale = d3.scaleSequential(colorScheme).domain([0, 1]);
 
-    plotScatter(svg, dataset, radius);
+    drawScatter(svg, dataset, radius);
     plotKNNGraph(svg, dataset, k, xScale, yScale);
   }
 
@@ -95,10 +91,6 @@
     const scales = computeDataScales(dataset, width, height, margin);
     xScale = scales.xScale;
     yScale = scales.yScale;
-
-    // Plot scatter at first 
-    const svg = d3.select(svgEl);
-    plotScatter(svg, dataset, radius);
   });
   
 </script>

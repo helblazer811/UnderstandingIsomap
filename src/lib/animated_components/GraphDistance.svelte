@@ -8,11 +8,12 @@
     computeKNearestNeighborGraph,
     dijkstraShortestPath,
   } from "$lib/utils/math.js";
+  import { plotScatter } from "$lib/utils/plotting.js";
 
   let svgEl; // local reference to the <svg> element
   export let width = 500;
   export let height = 250;
-  export let margin = 40;
+  export let margin = 0;
   export let k = 5;
   export let radius = 5;
   export let active = false;
@@ -68,24 +69,21 @@
     return { startIdx, endIdx };
   }
 
-  // Draw scatter points with constant blue color and click-to-highlight
-  function plotScatter(svg, dataset, xScale, yScale, radius, withinEpsilon) {
-    svg.selectAll("g.scatter-group").remove();
+  // Draw scatter points with constant blue color
+  function drawScatter(svg, dataset, xScale, yScale, radius, withinEpsilon) {
     const dataArr = dataset.data;
-    const scatterGroup = svg.append("g").attr("class", "scatter-group");
-    scatterGroup
-      .selectAll("circle.scatter-point")
-      .data(dataArr)
-      .enter()
-      .append("circle")
-      .attr("class", "scatter-point")
-      .attr("cx", (d) => xScale(d.x))
-      .attr("cy", (d) => yScale(d.y))
-      .attr("r", radius)
-      .attr("fill", graphColor)
-      .attr("opacity", (d, i) =>
-        withinEpsilon[i] ? pointOpacity * 2 : pointOpacity
-      )
+    const opacityArray = dataArr.map((d, i) =>
+      withinEpsilon[i] ? pointOpacity * 2 : pointOpacity
+    );
+
+    plotScatter(svg, dataset, { xScale, yScale }, {
+      radius,
+      fillColor: graphColor,
+      opacity: opacityArray,
+      pointClass: "scatter-point",
+      groupClass: "scatter-group",
+      clearPrevious: true
+    });
 
     return { xScale, yScale };
   }
@@ -282,7 +280,7 @@
 
   $: if (dataset && svgEl && showScatterPlot) {
     const svg = d3.select(svgEl);
-    plotScatter(svg, dataset, xScale, yScale, radius, []);
+    drawScatter(svg, dataset, xScale, yScale, radius, []);
   }
 
   $: if (
